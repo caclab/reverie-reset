@@ -1,0 +1,10 @@
+<CONFIG>
+	<screenResX>1920</screenResX>
+	<screenResY>1080</screenResY>
+	<totalScreens>8</totalScreens>
+	<testMode>1</testMode>
+	<showGrid>1</showGrid>
+	<sAddress>127.0.0.1</sAddress>
+	<sPort>8001</sPort>
+	<sTimeout>5000</sTimeout>
+</CONFIG>

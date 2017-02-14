@@ -1,0 +1,24 @@
+{
+    "server_config": {
+    	"PORT":5000,
+    	"SPORT":8001,
+    	"uploadPath":"/public/imgs/uploaded/",
+    	"captionedPath":"/public/imgs/captioned/",
+    	"neuralCommand":"sudo ~/torch/install/bin/th neuraltalk2/eval.lua -model ~/technoxaman/cac/a-and-t/yanlei/code/reverie-reset/server/neuraltalk2/models/model_id1-501-1448236541.t7_cpu.t7 -image_folder ~/technoxaman/cac/a-and-t/yanlei/code/reverie-reset/server/public/imgs/uploaded -num_images -1 -gpuid -1 -image_index ",
+    	"about":["||||||||||||||||||||||||||||||||||||||",
+			    "|||||||||REVERIE RESET SERVER|||||||||",
+			    "||||||||||||||||||||||||||||||||||||||",
+			    "",
+			    "AUTHOR: fito_segrera / http://fii.to",
+			    "A@T reasearch and creation project",
+			    "In collaboration with Yanlei",
+			    "Chronus Art Center, Shanghai / 2017",
+			    "LAB'S website: http://lab.chronusartcenter.org",
+			    "",
+			    "[LOG]:",
+			    "",
+			    "HTTP Server listening on port",
+			    "WS Server listening on port",
+				""]
+    }
+}
