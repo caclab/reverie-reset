@@ -3,6 +3,7 @@ var readline = require("readline");
 var exec = require('child_process').exec;
 
 var captionedPath = __dirname + "/public/imgs/captioned/";
+var uploadedPath = __dirname + "/public/imgs/uploaded/";
 
 var rl = readline.createInterface({
     input: process.stdin,
@@ -36,6 +37,12 @@ function main() {
                     console.log('exec error: ' + error);
                 }
                 console.log("All IMAGES have been deleted from the folder:", captionedPath);
+            });
+            exec("sudo rm " + uploadedPath + "*", function(error, stdout, stderr) {
+                if (error !== null) {
+                    console.log('exec error: ' + error);
+                }
+                console.log("All IMAGES have been deleted from the folder:", uploadedPath);
             });
         } else if (answer == 'n' || answer == 'N') {
             console.log("");
