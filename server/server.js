@@ -90,31 +90,18 @@ function getAllReadyImages(readyImagesPath, callback) {
     });
 }
 
-function checkImageScaleAndOrientation(lenna, callback) {
-    // console.log("\nIMG WIDTH", lenna.bitmap.width);
-    // console.log("IMG HEIGTH", lenna.bitmap.height);
-    // if (lenna.bitmap.width >= lenna.bitmap.height) {
-    //     lenna.resize(Jimp.AUTO, 720, function() {
-    //         if (lenna.bitmap.width < 1280) {
-    //             lenna.resize(1280, Jimp.AUTO);
-    //         }
-    //     });
-    //     // lenna.resize(1280, Jimp.AUTO);
-    // } else if (lenna.bitmap.width < lenna.bitmap.height) {
-    //     lenna.rotate(-90, function() {
-    //             if (lenna.bitmap.width < 1280) {
-    //                 lenna.resize(1280, Jimp.AUTO);
-    //             }
-    //         })
-    //         //WITHOUT ROTATION TO VERTICAL IMAGE
-    //         // lenna.resize(1280, Jimp.AUTO, function(){
-    //         //     if(lenna.bitmap.height < 720){
-    //         //         lenna.resize(Jimp.AUTO, 720);
-    //         //     }
-    //         // });
-    // }
-
-    callback(lenna);
+//Execute NeuralNet
+function runNeuralNet(imgInx, callback) {
+    exec.exec(neuralCommand + imgInx, function(error, stdout, stderr) {
+        console.log('stdout: ' + stdout);
+        console.log('stderr: ' + stderr);
+        if (error !== null) {
+            console.log('exec error: ' + error);
+        } else {
+            console.log("ORIGINAL FILE DELETED");
+            callback();
+        }
+    });
 }
 
 //check for changes in UPLOADED folder
@@ -150,62 +137,50 @@ watch.onChange(function(file, prev, curr, action) {
                     imgtype == 'jpeg' || imgtype == 'JPEG') {
 
                     Jimp.read(file, function(err, lenna) {
-                        checkImageScaleAndOrientation(lenna, function(newLenna) {
-                            if (err) {
-                                throw err;
-                            } else {
-                                var nameNoType = file.split('.' + imgtype);
-                                console.log(nameNoType[0] + ".jpg");
-                                newLenna.write(nameNoType[0] + ".jpg", function() {
-                                    console.log("IMG CONVERTED TO .jpg");
 
-                                    // exec('sudo rm ' + file, function(error, stdout, stderr) {
-                                    //     console.log('stdout: ' + stdout);
-                                    //     console.log('stderr: ' + stderr);
-                                    //     if (error !== null) {
-                                    //         console.log('exec error: ' + error);
-                                    //     } else {
-                                    //         console.log("ORIGINAL FILE DELETED");
-                                    //         exec(neuralCommand + imgInx, function(error, stdout, stderr) {
-                                    //             console.log('stdout: ' + stdout);
-                                    //             console.log('stderr: ' + stderr);
-                                    //             if (error !== null) {
-                                    //                 console.log('exec error: ' + error);
-                                    //             } else {
-                                    //                 console.log("ORIGINAL FILE DELETED");
-                                    //             }
-                                    //         });
-                                    //     }
-                                    // });
+                        if (err) {
+                            throw err;
+                        } else {
+                            var nameNoType = file.split('.' + imgtype);
+                            console.log(nameNoType[0] + ".jpg");
+                            lenna.write(nameNoType[0] + ".jpg", function() {
+                                console.log("IMG CONVERTED TO .jpg");
 
-                                    // Works for one upload at a time, if 2 images are 
-                                    // uploaded simultaneously or close to each other, 
-                                    // The thread dismisses one and causes an error
-                                    var proc1 = exec.spawn('rm', [file]);
-                                    proc1.stdout.on('data', function(data) { console.log("stdout: " + data); });
-                                    proc1.stderr.on('data', function(data) { console.log("stderr: " + data); });
-                                    proc1.on('exit', function(code) {
+                                // exec('sudo rm ' + file, function(error, stdout, stderr) {
+                                //     console.log('stdout: ' + stdout);
+                                //     console.log('stderr: ' + stderr);
+                                //     if (error !== null) {
+                                //         console.log('exec error: ' + error);
+                                //     } else {
+                                //         console.log("ORIGINAL FILE DELETED");
+                                //         exec(neuralCommand + imgInx, function(error, stdout, stderr) {
+                                //             console.log('stdout: ' + stdout);
+                                //             console.log('stderr: ' + stderr);
+                                //             if (error !== null) {
+                                //                 console.log('exec error: ' + error);
+                                //             } else {
+                                //                 console.log("ORIGINAL FILE DELETED");
+                                //             }
+                                //         });
+                                //     }
+                                // });
 
-                                        console.log("exit: " + code);
-                                        console.log("ORIGINAL FILE DELETED");
-
-                                        exec.exec(neuralCommand + imgInx, function(error, stdout, stderr) {
-                                            console.log('stdout: ' + stdout);
-                                            console.log('stderr: ' + stderr);
-                                            if (error !== null) {
-                                                console.log('exec error: ' + error);
-                                            } else {
-                                                console.log("ORIGINAL FILE DELETED");
-                                            }
-                                        });
-
+                                // Works for one upload at a time, if 2 images are 
+                                // uploaded simultaneously or close to each other, 
+                                // The thread dismisses one and causes an error
+                                var proc1 = exec.spawn('rm', [file]);
+                                proc1.stdout.on('data', function(data) { console.log("stdout: " + data); });
+                                proc1.stderr.on('data', function(data) { console.log("stderr: " + data); });
+                                proc1.on('exit', function(code) {
+                                    console.log("exit: " + code);
+                                    console.log("ORIGINAL FILE DELETED");
+                                    runNeuralNet(imgInx, function(){
+                                        console.log("FINISHED NEURALNET!");
                                     });
                                 });
-
-                            }
-                        });
+                            });
+                        }
                     });
-
                 }
             });
         });
