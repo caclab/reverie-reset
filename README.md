@@ -20,9 +20,9 @@ This README file describes the parts and uses of the system Reverie-reset develo
 
 8. public: Folder with the client side of the webapp as well as the folders with the images. 3 main folders:
 
-	/images/uploaded
-	/images/captioned
-	/images/conversion
+		/images/uploaded
+		/images/captioned
+		/images/conversion
 
 All uploaded images go to the uploaded file, the system copies them to the conversion folder and then removes them from the uploaded folder. Once there is a cycle check, the neuralnet will run and caption all images on the conversion folder and move them to the captioned folder. This last folder keeps all images which have been processed + a vis.json file.
 
