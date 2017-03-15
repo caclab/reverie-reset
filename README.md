@@ -2,7 +2,7 @@
 
 This README file describes the parts and uses of the system Reverie-reset developed by CAC_LAB under the direction of fito_segrera. A total of 80 LCD displays connected to 10 computers (each controlling 8 screens) and a local server. The system allows people to upload images from their phones to the server. This images are processed to obtain the average color and then sent to a cognitive computation system to be analyzed and captioned as text.
 
-###Files Included in the server folder
+### Files Included in the server folder
 
 1. server.js: Server or main app of the system. Creates a rout for uploading images at localhost:5000. Users can upload images to the system through this url. This app runs all subprocesses for cleaning and managing files + captioning images through the artificial neural network in realtime.
 
@@ -26,7 +26,7 @@ This README file describes the parts and uses of the system Reverie-reset develo
 
 All uploaded images go to the uploaded file, the system copies them to the conversion folder and then removes them from the uploaded folder. Once there is a cycle check, the neuralnet will run and caption all images on the conversion folder and move them to the captioned folder. This last folder keeps all images which have been processed + a vis.json file.
 
-9.vis.json file: This last file will keep all the captioned data per image + each image's id.
+9. vis.json file: This last file will keep all the captioned data per image + each image's id.
 
 ### Server
 
