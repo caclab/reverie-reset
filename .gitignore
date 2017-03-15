@@ -2,7 +2,7 @@
 server/node_modules/
 server/public/imgs/uploads/*
 server/public/imgs/captioned/*
-server/public/imgs/trash-test/*
+server/public/imgs/conversion/*
 multi-image-render-app/bin/data/images/*
 server/neuraltalk2/*
 
@@ -10,6 +10,6 @@ server/neuraltalk2/*
 # exception to the rule
 !server/public/imgs/uploads/.gitkeep
 !server/public/imgs/captioned/.gitkeep
-!server/public/imgs/trash-test/.gitkeep
+!server/public/imgs/conversion/.gitkeep
 !multi-image-render-app/bin/data/images/.gitkeep
 !server/neuraltalk2/.gitkeep
