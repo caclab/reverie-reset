@@ -20,9 +20,9 @@ This README file describes the parts and uses of the system Reverie-reset develo
 
 8. public: Folder with the client side of the webapp as well as the folders with the images. 3 main folders:
 
-		/images/uploaded
-		/images/captioned
-		/images/conversion
+		/public/imgs/uploaded
+		/public/imgs/captioned
+		/public/imgs/conversion
 
 All uploaded images go to the uploaded file, the system copies them to the conversion folder and then removes them from the uploaded folder. Once there is a cycle check, the neuralnet will run and caption all images on the conversion folder and move them to the captioned folder. This last folder keeps all images which have been processed + a vis.json file.
 
@@ -32,9 +32,34 @@ All uploaded images go to the uploaded file, the system copies them to the conve
 
 User are invited to scan a QR code which takes them to a local url. Here they can press a button which allows them to upload an image to the server. The system will:
 
-1. Check and make sure the file is either a .jpg or .png, if none is detected, print a message for the user and then redirect to the upload link and try again.
+1. The clinet "index.html" checks and makes sure the file is either a .jpg, .bpm or .png, if none is detected, prompts a message for the user to try again.
 
-2. If an image is successfully uploaded, then make sure the name doesn't have spaces or uppper case letters. If everything is ok, save it on the server's path public/imgs/uploaded
+2. If an image is successfully uploaded, save it on the server's path /public/imgs/uploaded/. Convert the image into a .jpg file, give it a random hash name and move it to the /public/imgs/conversion/ folder. The system has a cycle with a period of 30 secs by default (which can be modified at any time in the config.json file). When a cycle finishes the system checks for images in the /public/imgs/conversion/ folder. If there are images there, the neuralnet will be executed and it will caption all these images. The images get moved to the /public/imgs/captioned/ folder.
+
+The way it keeps order of the images is as follows:
+
+a. It checks for the total number of images that are already saved in the /public/imgs/captioned/ folder. If there are, lets say, 54 images already saved and captioned, it starts the neural network with the image_index 55. The new images in the conversion folder will be saved as 55.jpg, 56.jpg, 57.jpg and so on. The same goes to the vis.jaon file where the captions are saved, it will add them:
+
+		[
+			.
+			.
+			.
+			{
+				"image_id":"55",
+				"caption":"a couple of people on a boat in the water"
+			},
+			{
+				"image_id":"56",
+				"caption":"a couple dogs playing"
+			},
+			{
+				"image_id":"57",
+				"caption":"a man is flying a kite on the beach"
+			},
+			.
+			.
+			.
+		]
 
 ### Captioning
 
