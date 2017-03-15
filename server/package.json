@@ -17,6 +17,7 @@
     "jimp": "^0.2.27",
     "nodejs-websocket": "^1.7.1",
     "nodewatch": "^0.3.1",
+    "randomstring": "^1.1.5",
     "read-chunk": "^2.0.0"
   }
 }

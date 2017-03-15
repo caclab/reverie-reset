@@ -1,9 +1,5 @@
 # reverie-reset
 
-###Requirements
-
-1. imagemagik
-
 This README file describes the parts and uses of the system Reverie-reset developed by CAC_LAB under the direction of fito_segrera. A total of 80 LCD displays connected to 10 computers (each controlling 8 screens) and a local server. The system allows people to upload images from their phones to the server. This images are processed to obtain the average color and then sent to a cognitive computation system to be analyzed and captioned as text.
 
 ### Server
@@ -34,3 +30,49 @@ Example for line 145:
 Example for line 189:
 
 	/home/myusername/someFolder/output/vis.json
+
+### COM Protocol
+
+The communication is done via websockets. The basic structure is as follows:
+
+	Server  <-->  Client 1
+			<-->  Client 2
+			<-->  Client 3
+			<-->  Client 4
+			<-->  Client 5
+
+Events Definition:
+
+1. Clients connect to server and is online:
+
+	$READY
+
+2. No new image is uploaded currently, server sends the state message:
+	
+	$STATE-RANDOM
+
+The client is ready to show random images from database:
+
+	$R-STANBY
+
+Server responds with a vis.json file will all images in database and their corresponding captions.
+
+3. Client received the data and randomly choses the images and their respective captions. The client then loads the image, scales and rotates if necesary and averages the color of the pixels, once this subprocesses are ready, the client sends back a message to the server:
+
+	$R-READY 
+
+4. When all clients are ready with the preprocessed images and texts, meaning when the server received all 5 $R-READY messages, the server replies back with the trigger to display:
+
+	$R-SHOW
+
+This is a broadcast to all clients, they inmediately show their images on their displays.
+
+The same protocol and process applies to the new image state of the system. This means if the system receive a new uploaded image from a user in the gallery space. The system will allways give priority to the new images submitted. The difference is on the message but the type of messages are the same. If there is a new image the server will inmediately send the following message:
+
+	$STATE-UPLOAD
+
+The rest are the same as the random state but replaced with:
+	
+	$U-STANDBY
+	$U-READY
+	$U-SHOW
