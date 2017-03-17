@@ -127,32 +127,64 @@ function runNeuralNet(imgInx) {
 //in the status file, then caption all images in conversion folder
 function generalSystemInterval() {
     setInterval(function() {
-        fs.readFile(statusPath, 'utf-8', function(err, content) {
-            if (err) { console.log(err); }
-            var obj = JSON.parse(content);
-            console.log("IMAGE STATUS:", obj.image_status);
-            var image_index = getAllReadyImages(captionedPath, function(indx) {
-                var imgInx = parseInt(indx - 1); // -1 to avoid cointing the vis.json file
-                console.log("IMAGE INDEX:", imgInx);
-                if (obj.image_status > imgInx) {
-                    console.log("NEW IMAGE(S) FOUND!!");
-                    runNeuralNet(imgInx + 1);
-                } else {
-                    console.log("NO NEW IMAGES FOUND!!");
-                    //AUTO-RESET in case there is leftover trash on the server folders
-                    exec.exec("node " + pathAutoRest + " -p", function(error, stdout, stderr) {
-                        console.log('stdout: ' + stdout);
-                        console.log('stderr: ' + stderr);
-                        if (error !== null) {
-                            console.log('exec error: ' + error);
+        var image_index = getAllReadyImages(uploadPath, function(i) {
+            var uploadIndex = parseInt(i); // -1 to avoid cointing the vis.json file
+            if (i > 0) {
+                exec.exec("rm -r " + uploadPath + "*", function(error, stdout, stderr) {
+                    console.log('stdout: ' + stdout);
+                    console.log('stderr: ' + stderr);
+                    if (error !== null) {
+                        console.log('exec error: ' + error);
+                    }
+                });
+            }
+            fs.readFile(statusPath, 'utf-8', function(err, content) {
+                if (err) { console.log(err); }
+                var obj = JSON.parse(content);
+                console.log("IMAGE STATUS:", obj.image_status);
+                var image_index = getAllReadyImages(captionedPath, function(indx) {
+                    var imgInx = parseInt(indx - 1); // -1 to avoid cointing the vis.json file
+                    console.log("IMAGE INDEX IN CAPTIONED FOLDER:", imgInx);
+
+                    var image_index2 = getAllReadyImages(conversionPath, function(indx2) {
+                        var imgInx2 = parseInt(indx2);
+                        console.log("IMAGE INDEX IN CONVERSION FOLDER:", imgInx);
+
+                        var totalIndex = imgInx + imgInx2;
+
+                        if (totalIndex > imgInx) {
+                            console.log("NEW IMAGE(S) FOUND!!");
+                            runNeuralNet(imgInx + 1);
+                            var ims = totalIndex;
+                            var newData = {
+                                "image_status": ims
+                            }
+                            fs.writeFile(__dirname + "/status.json", JSON.stringify(newData), function(err) {
+                                if (err) {
+                                    return console.error(err);
+                                }
+
+                            });
                         } else {
-                            console.log("AUTO RESET DONE!");
+                            console.log("NO NEW IMAGES FOUND!!");
+                            //AUTO-RESET in case there is leftover trash on the server folders
+                            exec.exec("node " + pathAutoRest + " -p", function(error, stdout, stderr) {
+                                console.log('stdout: ' + stdout);
+                                console.log('stderr: ' + stderr);
+                                if (error !== null) {
+                                    console.log('exec error: ' + error);
+                                } else {
+                                    console.log("AUTO RESET DONE!");
+                                }
+                            });
                         }
                     });
-                }
+                });
             });
+            console.log("\nNEW INTERVAL CYCLE!");
         });
-        console.log("\nNEW INTERVAL CYCLE!");
+
+
     }, systemInterval);
 }
 
@@ -175,50 +207,32 @@ watch.onChange(function(file, prev, curr, action) {
         readFiles(uploadPath, function(totalFiles) {
             console.log("TOTAL FILES IN FOLDER", totalFiles);
             //Execute the NEURAL NET for all saved files
-            var buffer = readChunk.sync(file, 0, 100);
-            var imgtype = imageType(buffer);
-            imgtype = imgtype.ext;
-            console.log("IMG TYPE", imgtype);
+            if (fs.existsSync(file)) {
+                var buffer = readChunk.sync(file, 0, 100);
+                var imgtype = imageType(buffer);
+                imgtype = imgtype.ext;
+                console.log("IMG TYPE", imgtype);
 
-            //Check if filetype is an image
-            if (imgtype == 'jpg' || imgtype == 'JPG' ||
-                imgtype == 'png' || imgtype == 'PNG' ||
-                imgtype == 'bpm' || imgtype == 'BPM' ||
-                imgtype == 'jpeg' || imgtype == 'JPEG') {
+                //Check if filetype is an image
+                if (imgtype == 'jpg' || imgtype == 'JPG' ||
+                    imgtype == 'png' || imgtype == 'PNG' ||
+                    imgtype == 'bpm' || imgtype == 'BPM' ||
+                    imgtype == 'jpeg' || imgtype == 'JPEG') {
 
-                Jimp.read(file, function(err, lenna) {
+                    Jimp.read(file, function(err, lenna) {
 
-                    if (err) {
-                        throw err;
-                    } else {
-                        var nameNoType = file.split('.' + imgtype);
-                        console.log(nameNoType[0] + ".jpg");
-                        lenna.write(conversionPath + randomstring.generate(10) + ".jpg", function() {
-                            console.log("IMG CONVERTED TO .jpg");
-                            var proc1 = exec.spawn('rm', [file]);
-                            proc1.stdout.on('data', function(data) { console.log("stdout: " + data); });
-                            proc1.stderr.on('data', function(data) { console.log("stderr: " + data); });
-                            proc1.on('exit', function(code) {
-                                console.log("exit: " + code);
-                                fs.readFile(statusPath, 'utf-8', function(err, content) {
-                                    if (err) { console.log(err); }
-                                    var obj = JSON.parse(content);
-                                    var ims = (obj.image_status + 1);
-                                    var newData = {
-                                        "image_status": ims
-                                    }
+                        if (err) {
+                            throw err;
+                        } else {
+                            var nameNoType = file.split('.' + imgtype);
+                            console.log(nameNoType[0] + ".jpg");
+                            lenna.write(conversionPath + randomstring.generate(10) + ".jpg", function() {
+                                console.log("IMG CONVERTED TO .jpg");
 
-                                    fs.writeFile(__dirname + "/status.json", JSON.stringify(newData), function(err) {
-                                        if (err) {
-                                            return console.error(err);
-                                        }
-                                        console.log("IMAGE STATUS:", obj.image_status);
-                                    });
-                                });
                             });
-                        });
-                    }
-                });
+                        }
+                    });
+                }
             }
         });
     }

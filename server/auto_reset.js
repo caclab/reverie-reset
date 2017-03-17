@@ -72,17 +72,28 @@ function main() {
         resetStatusFile();
         console.log("STATUS FILE UPDATED!");
         console.log("");
-        exec("sudo rm " + uploadedPath + "*", function(error, stdout, stderr) {
-            if (error !== null) {
-                console.log('exec error: ' + error);
+        var image_index_upload = getAllReadyImages(uploadedPath, function(indx_upload) {
+            var imgInx_upload = parseInt(indx_upload);
+            if (imgInx_upload > 0) {
+                exec("sudo rm -r " + uploadedPath + "*", function(error, stdout, stderr) {
+                    if (error !== null) {
+                        console.log('exec error: ' + error);
+                    }
+                    console.log("All IMAGES have been deleted from the folder:", uploadedPath);
+                });
             }
-            console.log("All IMAGES have been deleted from the folder:", uploadedPath);
         });
-        exec("sudo rm " + conversionPath + "*.jpg", function(error, stdout, stderr) {
-            if (error !== null) {
-                console.log('exec error: ' + error);
+
+        var image_index_conversion = getAllReadyImages(conversionPath, function(indx_conversion) {
+            var imgInx_conversion = parseInt(indx_conversion);
+            if (imgInx_conversion > 0) {
+                exec("sudo rm " + conversionPath + "*.jpg", function(error, stdout, stderr) {
+                    if (error !== null) {
+                        console.log('exec error: ' + error);
+                    }
+                    console.log("All IMAGES have been deleted from the folder:", captionedPath);
+                });
             }
-            console.log("All IMAGES have been deleted from the folder:", captionedPath);
         });
     } else if (arguments == "-p") {
         var image_index = getAllReadyImages(captionedPath, function(indx) {
