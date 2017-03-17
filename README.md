@@ -84,13 +84,13 @@ Example for line 189:
 
 ### COM Protocol
 
-The communication is done via websockets. The basic structure is as follows:
+The communication is done via websockets. The basic structure is: 
 
-	Server  <-->  Client 1
-			<-->  Client 2
-			<-->  Client 3
-			<-->  Client 4
-			<-->  Client 5
+		Server  <-->  Client 1
+		Server  <-->  Client 2
+		Server  <-->  Client 3
+		Server  <-->  Client 4
+		Server  <-->  Client 5
 
 Events Definition:
 
