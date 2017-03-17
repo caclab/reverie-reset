@@ -1,6 +1,6 @@
 # reverie-reset
 
-![alt tag](https://github.com/caclab/reverie-reset/imgs/1.jpg)
+![alt tag](https://raw.githubusercontent.com/caclab/reverie-reset/imgs/1.jpg)
 
 
 This README file describes the parts and uses of the system Reverie-reset developed by CAC_LAB under the direction of fito_segrera. A total of 80 LCD displays connected to 10 computers (each controlling 8 screens) and a local server. The system allows people to upload images from their phones to the server. This images are processed to obtain the average color and then sent to a cognitive computation system to be analyzed and captioned as text.
