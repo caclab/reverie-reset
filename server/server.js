@@ -6,21 +6,37 @@ var ws = require("nodejs-websocket");
 // var exec = require('child_process').exec;
 var exec = require('child_process');
 var config = require('./config.json');
+
 var readChunk = require('read-chunk');
 const imageType = require('image-type');
-
 var Jimp = require("jimp");
 var app = express();
+var randomstring = require("randomstring");
 
 var PORT = config.server_config.PORT; //http port
 var SPORT = config.server_config.SPORT; //ws port
 var uploadPath = __dirname + config.server_config.uploadPath;
 var captionedPath = __dirname + config.server_config.captionedPath;
+var conversionPath = __dirname + config.server_config.conversionPath;
 var neuralCommand = config.server_config.neuralCommand;
+var statusPath = __dirname + config.server_config.statusPath;
+var systemInterval = config.server_config.systemInterval;
 
 app.use(fileUpload());
 
 watch.add(uploadPath);
+
+var pathAutoRest = __dirname + "/auto_reset.js";
+//AUTO-RESET in case there is leftover trash on the server folders
+exec.exec("node " + pathAutoRest + " -t", function(error, stdout, stderr) {
+    console.log('stdout: ' + stdout);
+    console.log('stderr: ' + stderr);
+    if (error !== null) {
+        console.log('exec error: ' + error);
+    } else {
+        console.log("AUTO RESET DONE!");
+    }
+});
 
 // route to index.html
 app.use('/', express.static(__dirname + '/public'));
@@ -91,7 +107,9 @@ function getAllReadyImages(readyImagesPath, callback) {
 }
 
 //Execute NeuralNet
-function runNeuralNet(imgInx, callback) {
+function runNeuralNet(imgInx) {
+    //Please check the eval.lua for errors on saving the vis.json and the image file
+    console.log("NEURAL NET COMMAND:", neuralCommand + imgInx);
     exec.exec(neuralCommand + imgInx, function(error, stdout, stderr) {
         console.log('stdout: ' + stdout);
         console.log('stderr: ' + stderr);
@@ -99,10 +117,78 @@ function runNeuralNet(imgInx, callback) {
             console.log('exec error: ' + error);
         } else {
             console.log("ORIGINAL FILE DELETED");
-            callback();
         }
     });
 }
+
+//Function to recursivelly check for any changes in the system:
+//It checks a status file which contains the previous index of captioned files
+//If the number stored in the status.json file is greater than the total files in the captioned folder
+//in the status file, then caption all images in conversion folder
+function generalSystemInterval() {
+    setInterval(function() {
+        var image_index = getAllReadyImages(uploadPath, function(i) {
+            var uploadIndex = parseInt(i); // -1 to avoid cointing the vis.json file
+            if (i > 0) {
+                exec.exec("rm -r " + uploadPath + "*", function(error, stdout, stderr) {
+                    console.log('stdout: ' + stdout);
+                    console.log('stderr: ' + stderr);
+                    if (error !== null) {
+                        console.log('exec error: ' + error);
+                    }
+                });
+            }
+            fs.readFile(statusPath, 'utf-8', function(err, content) {
+                if (err) { console.log(err); }
+                var obj = JSON.parse(content);
+                console.log("IMAGE STATUS:", obj.image_status);
+                var image_index = getAllReadyImages(captionedPath, function(indx) {
+                    var imgInx = parseInt(indx - 1); // -1 to avoid cointing the vis.json file
+                    console.log("IMAGE INDEX IN CAPTIONED FOLDER:", imgInx);
+
+                    var image_index2 = getAllReadyImages(conversionPath, function(indx2) {
+                        var imgInx2 = parseInt(indx2);
+                        console.log("IMAGE INDEX IN CONVERSION FOLDER:", imgInx);
+
+                        var totalIndex = imgInx + imgInx2;
+
+                        if (totalIndex > imgInx) {
+                            console.log("NEW IMAGE(S) FOUND!!");
+                            runNeuralNet(imgInx + 1);
+                            var ims = totalIndex;
+                            var newData = {
+                                "image_status": ims
+                            }
+                            fs.writeFile(__dirname + "/status.json", JSON.stringify(newData), function(err) {
+                                if (err) {
+                                    return console.error(err);
+                                }
+
+                            });
+                        } else {
+                            console.log("NO NEW IMAGES FOUND!!");
+                            //AUTO-RESET in case there is leftover trash on the server folders
+                            exec.exec("node " + pathAutoRest + " -p", function(error, stdout, stderr) {
+                                console.log('stdout: ' + stdout);
+                                console.log('stderr: ' + stderr);
+                                if (error !== null) {
+                                    console.log('exec error: ' + error);
+                                } else {
+                                    console.log("AUTO RESET DONE!");
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+            console.log("\nNEW INTERVAL CYCLE!");
+        });
+
+
+    }, systemInterval);
+}
+
+generalSystemInterval();
 
 //check for changes in UPLOADED folder
 watch.onChange(function(file, prev, curr, action) {
@@ -117,14 +203,11 @@ watch.onChange(function(file, prev, curr, action) {
     if (action !== 'delete') {
         console.log('FILE ADDED!!');
 
-        var image_index = getAllReadyImages(captionedPath, function(indx) {
-            var imgInx = parseInt(indx);
-            console.log("\nIMAGE INDEX " + imgInx);
-
-            //CHECK EXISTING FILES IN UPLOADS FOLDER
-            readFiles(uploadPath, function(totalFiles) {
-                console.log("TOTAL FILES IN FOLDER", totalFiles);
-                //Execute the NEURAL NET for all saved files
+        //CHECK EXISTING FILES IN UPLOADS FOLDER
+        readFiles(uploadPath, function(totalFiles) {
+            console.log("TOTAL FILES IN FOLDER", totalFiles);
+            //Execute the NEURAL NET for all saved files
+            if (fs.existsSync(file)) {
                 var buffer = readChunk.sync(file, 0, 100);
                 var imgtype = imageType(buffer);
                 imgtype = imgtype.ext;
@@ -143,46 +226,14 @@ watch.onChange(function(file, prev, curr, action) {
                         } else {
                             var nameNoType = file.split('.' + imgtype);
                             console.log(nameNoType[0] + ".jpg");
-                            lenna.write(nameNoType[0] + ".jpg", function() {
+                            lenna.write(conversionPath + randomstring.generate(10) + ".jpg", function() {
                                 console.log("IMG CONVERTED TO .jpg");
 
-                                // exec('sudo rm ' + file, function(error, stdout, stderr) {
-                                //     console.log('stdout: ' + stdout);
-                                //     console.log('stderr: ' + stderr);
-                                //     if (error !== null) {
-                                //         console.log('exec error: ' + error);
-                                //     } else {
-                                //         console.log("ORIGINAL FILE DELETED");
-                                //         exec(neuralCommand + imgInx, function(error, stdout, stderr) {
-                                //             console.log('stdout: ' + stdout);
-                                //             console.log('stderr: ' + stderr);
-                                //             if (error !== null) {
-                                //                 console.log('exec error: ' + error);
-                                //             } else {
-                                //                 console.log("ORIGINAL FILE DELETED");
-                                //             }
-                                //         });
-                                //     }
-                                // });
-
-                                // Works for one upload at a time, if 2 images are 
-                                // uploaded simultaneously or close to each other, 
-                                // The thread dismisses one and causes an error
-                                var proc1 = exec.spawn('rm', [file]);
-                                proc1.stdout.on('data', function(data) { console.log("stdout: " + data); });
-                                proc1.stderr.on('data', function(data) { console.log("stderr: " + data); });
-                                proc1.on('exit', function(code) {
-                                    console.log("exit: " + code);
-                                    console.log("ORIGINAL FILE DELETED");
-                                    runNeuralNet(imgInx, function(){
-                                        console.log("FINISHED NEURALNET!");
-                                    });
-                                });
                             });
                         }
                     });
                 }
-            });
+            }
         });
     }
 });

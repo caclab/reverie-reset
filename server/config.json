@@ -2,9 +2,12 @@
     "server_config": {
     	"PORT":5000,
     	"SPORT":8001,
+    	"systemInterval": 30000,
+    	"statusPath":"/status.json",
     	"uploadPath":"/public/imgs/uploaded/",
     	"captionedPath":"/public/imgs/captioned/",
-    	"neuralCommand":"sudo ~/torch/install/bin/th neuraltalk2/eval.lua -model ~/technoxaman/cac/a-and-t/yanlei/code/reverie-reset/server/neuraltalk2/models/model_id1-501-1448236541.t7_cpu.t7 -image_folder ~/technoxaman/cac/a-and-t/yanlei/code/reverie-reset/server/public/imgs/uploaded -num_images -1 -gpuid -1 -image_index ",
+    	"conversionPath": "/public/imgs/conversion/",
+    	"neuralCommand":"sudo /home/fitosegrera/torch/install/bin/th neuraltalk2/eval.lua -model /home/fitosegrera/technoxaman/cac/a-and-t/yanlei/code/reverie-reset/server/neuraltalk2/models/model_id1-501-1448236541.t7_cpu.t7 -image_folder /home/fitosegrera/technoxaman/cac/a-and-t/yanlei/code/reverie-reset/server/public/imgs/conversion -num_images -1 -gpuid -1 -image_index ",
     	"about":["||||||||||||||||||||||||||||||||||||||",
 			    "|||||||||REVERIE RESET SERVER|||||||||",
 			    "||||||||||||||||||||||||||||||||||||||",
