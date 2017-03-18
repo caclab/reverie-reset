@@ -1,0 +1,23 @@
+bin/*
+!bin/data/
+
+# vs
+obj
+.vs
+*.db
+*.opendb
+*.rc
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.aps
+
+# xcode
+Makefile
+*.xcconfig
+*.xcodeproj
+*.make
+*.plist
+
+!.gitignore
