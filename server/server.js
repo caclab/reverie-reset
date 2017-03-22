@@ -238,13 +238,20 @@ watch.onChange(function(file, prev, curr, action) {
     }
 });
 
+var readyStates = []
+
 //Socket server WS
 var ws_server = ws.createServer(function(conn) {
     console.log("New connection");
     conn.sendText("hello world");
-    // conn.on("message", function (str) {
-    //     console.log("Received "+str);
-    // });
+    conn.on("message", function (str) {
+        console.log("Received "+str);
+        var tmpMsg = str.split('$');
+        if(tmpMsg[1] == "READY"){
+            readyStates.push(str);
+            console.log(tmpMsg[1]);
+        }
+    });
     conn.on("close", function(code, reason) {
         console.log("Connection closed");
     });
