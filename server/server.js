@@ -2,7 +2,6 @@ var express = require('express');
 var fileUpload = require('express-fileupload');
 var watch = require('nodewatch');
 var fs = require('fs');
-var ws = require("nodejs-websocket");
 // var exec = require('child_process').exec;
 var exec = require('child_process');
 var config = require('./config.json');
@@ -12,6 +11,8 @@ const imageType = require('image-type');
 var Jimp = require("jimp");
 var app = express();
 var randomstring = require("randomstring");
+
+const WebSocket = require('ws');
 
 var PORT = config.server_config.PORT; //http port
 var SPORT = config.server_config.SPORT; //ws port
@@ -121,6 +122,23 @@ function runNeuralNet(imgInx) {
     });
 }
 
+function prepareDataForClient(callback) {
+    fs.readFile(captionedPath + "vis.json", 'utf-8', function(err, visData) {
+        if (err) { console.log(err); }
+        var income = JSON.parse(visData);
+        var toSend = {};
+        for (var i = 0; i < 12; i++) {
+            toSend[i+1] = income[Math.floor(Math.random() * income.length)];
+            //console.log(toSend[i]);
+            if(i==11){
+                callback(toSend);
+                client_status = "";
+                wwws.send(JSON.stringify(toSend));
+            }
+        }
+    });
+}
+
 //Function to recursivelly check for any changes in the system:
 //It checks a status file which contains the previous index of captioned files
 //If the number stored in the status.json file is greater than the total files in the captioned folder
@@ -151,6 +169,12 @@ function generalSystemInterval() {
                         console.log("IMAGE INDEX IN CONVERSION FOLDER:", imgInx);
 
                         var totalIndex = imgInx + imgInx2;
+
+                        if (client_status !== "") {
+                            prepareDataForClient(function(toSend){
+                                console.log(toSend);
+                            });
+                        }
 
                         if (totalIndex > imgInx) {
                             console.log("NEW IMAGE(S) FOUND!!");
@@ -238,24 +262,71 @@ watch.onChange(function(file, prev, curr, action) {
     }
 });
 
-var readyStates = []
+/*
+PROTOCOL
 
-//Socket server WS
-var ws_server = ws.createServer(function(conn) {
-    console.log("New connection");
-    conn.sendText("hello world");
-    conn.on("message", function (str) {
-        console.log("Received "+str);
-        var tmpMsg = str.split('$');
-        if(tmpMsg[1] == "READY"){
-            readyStates.push(str);
-            console.log(tmpMsg[1]);
-        }
+SYSTEM INITIATED SERVER ONLINE + 
+CLIENTS CONNECT AND SEND:
+
+    c1$ready
+    c2$ready
+    c3$ready
+    c4$ready
+    c5$ready
+
+IF NO NEW IMAGE UPLOAD SERVER SENDS OUT
+A JSON OBJECT WITH ALL RANDOM DATA:    
+    
+    {
+        "c1": 
+            {
+                "1":{
+                        "image_id":"259",
+                        "caption":"a close up of a clock on a wall"
+                    },
+                "2":{
+                        "image_id":"126",
+                        "caption":"a man on the beach"
+                    },
+                    .
+                    .
+                    .
+                (12 objects in total all random)
+            },
+        "c2":
+            {
+                (same here)
+            },
+        .
+        .
+        .
+        (All clients: c1, c2, c3, c4, c5)
+    }
+
+
+
+*/ 
+
+var client_status = "";
+var wwws;
+//Create websocket server
+const wss = new WebSocket.Server({ port: SPORT });
+wss.on('connection', function connection(ws) {
+    wwws = ws;
+    console.log('Client connected!');
+    ws.on('message', function incoming(message) {
+        console.log('received: %s', message);
+        client_status = message.split('$');
+        // var datatest = [{
+        //     "caption": "a group of people standing around a truck",
+        //     "image_id": "1"
+        // }, {
+        //     "caption": "a close up of a clock on a wall",
+        //     "image_id": "2"
+        // }];
+        // ws.send(JSON.stringify(datatest));
     });
-    conn.on("close", function(code, reason) {
-        console.log("Connection closed");
-    });
-}).listen(SPORT);
+});
 
 //Start MAIN app http Server
 app.listen(PORT, function() {
