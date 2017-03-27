@@ -122,17 +122,24 @@ function runNeuralNet(imgInx) {
     });
 }
 
+//Random data to display on screens
 function prepareDataForClient(callback) {
     fs.readFile(captionedPath + "vis.json", 'utf-8', function(err, visData) {
         if (err) { console.log(err); }
         var income = JSON.parse(visData);
+        var toSendTotal = {};
         var toSend = {};
-        for (var i = 0; i < 12; i++) {
-            toSend[i+1] = income[Math.floor(Math.random() * income.length)];
-            //console.log(toSend[i]);
-            if(i==11){
-                callback(toSend);
-                client_status = "";
+        for (var c = 0; c < 5; c++) {
+            for (var i = 0; i < 12; i++) {
+                toSend[i + 1] = income[Math.floor(Math.random() * income.length)];
+                //console.log(toSend[i]);
+                if (i == 11) {
+                    toSendTotal[c + 1] = toSend;
+                }
+            }
+            if (c == 4) {
+                callback(toSendTotal);
+                //client_status = "";
                 wwws.send(JSON.stringify(toSend));
             }
         }
@@ -170,10 +177,20 @@ function generalSystemInterval() {
 
                         var totalIndex = imgInx + imgInx2;
 
-                        if (client_status !== "") {
-                            prepareDataForClient(function(toSend){
+                        //Check and validate all connected clients
+                        //Then send random data to clients
+                        var toCompare = ['c1', 'c2', 'c3', 'c4', 'c5'];
+                        if (client_status.length == 5 && client_status.every(function(u, i) {
+                                return u === toCompare[i];
+                            })) {
+                            console.log("Preparing DATA to Send to clients!");
+                            prepareDataForClient(function(toSend) {
                                 console.log(toSend);
                             });
+                        } else {
+                            console.log("ERROR with connected clients");
+                            console.log("No data was sent!");
+                            console.log("Make sure all clients are connected!");
                         }
 
                         if (totalIndex > imgInx) {
@@ -305,9 +322,9 @@ A JSON OBJECT WITH ALL RANDOM DATA:
 
 
 
-*/ 
+*/
 
-var client_status = "";
+var client_status = [];
 var wwws;
 //Create websocket server
 const wss = new WebSocket.Server({ port: SPORT });
@@ -316,15 +333,11 @@ wss.on('connection', function connection(ws) {
     console.log('Client connected!');
     ws.on('message', function incoming(message) {
         console.log('received: %s', message);
-        client_status = message.split('$');
-        // var datatest = [{
-        //     "caption": "a group of people standing around a truck",
-        //     "image_id": "1"
-        // }, {
-        //     "caption": "a close up of a clock on a wall",
-        //     "image_id": "2"
-        // }];
-        // ws.send(JSON.stringify(datatest));
+        var tmp = message.split('$');
+        if (tmp[1] == 'ready') {
+            client_status.push(tmp[0]);
+            console.log(client_status);
+        }
     });
 });
 
