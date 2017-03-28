@@ -10,9 +10,10 @@
 #include "ImageInfoBundle.hpp"
 
 Cell::Cell() {
-	mState = FINISHED;
+	mState = IDLE;
 	
 	mFont.load("fonts/verdana.ttf", 64, true, true, true);
+	mOneCycleFinished = true;
 }
 
 Cell::~Cell() {
@@ -20,7 +21,7 @@ Cell::~Cell() {
 
 void Cell::setup(glm::vec2 pos, glm::vec2 size,
 				 std::shared_ptr<ImageInfoBundle> imageInfoBundle, int indexStart,
-				 float timeImage, float timeColor, float timeText) {
+				 float timeImage, float timeColor, float timeText, float timeBlack) {
 	mPos = pos;
 	mSize = size;
 	mImageInfoBundle = imageInfoBundle;
@@ -28,15 +29,18 @@ void Cell::setup(glm::vec2 pos, glm::vec2 size,
 	mTimeImage = timeImage;
 	mTimeColor = timeColor;
 	mTimeText = timeText;
+	mTimeBlack = timeBlack;
 	
-	mState = FINISHED;
 	mIndexCurrent = mIndexStart;
 	mScaleText = size.y / 720;
+	
+	cycle();
 }
 
 void Cell::cycle() {
 	mTimeStart = ofGetElapsedTimef();
 	mState = IMAGE;
+	mOneCycleFinished = false;
 }
 
 void Cell::update() {
@@ -61,19 +65,23 @@ void Cell::update() {
 			break;
 		case TEXT:
 			if (timeCurrent - mTimeStart >= mTimeText) {
+				mState = BLACK;
+				mTimeStart = timeCurrent;
+			}
+			break;
+		case BLACK:
+			if (timeCurrent - mTimeStart >= mTimeBlack) {
 				int indexNext = (mIndexCurrent + 1) % mImageInfoBundle->mImageInfos.size();
 				if (indexNext == mIndexStart) {
 					// one cycle finished
-					mState = FINISHED;
-				} else {
-					// cycle not finished, switch to next image
-					mIndexCurrent = indexNext;
-					mState = IMAGE;
-					mTimeStart = timeCurrent;
+					mOneCycleFinished = true;
 				}
+				
+				// cycle not finished, switch to next image
+				mIndexCurrent = indexNext;
+				mState = IMAGE;
+				mTimeStart = timeCurrent;
 			}
-			break;
-		case FINISHED:
 			break;
 		default:
 			break;
@@ -101,7 +109,7 @@ void Cell::draw() {
 									 mPosText.x, mPosText.y);
 			ofPopMatrix();
 			break;
-		case FINISHED:
+		case BLACK:
 			ofSetColor(0);
 			ofDrawRectangle(mPos, mSize.x, mSize.y);
 			break;
@@ -111,5 +119,5 @@ void Cell::draw() {
 }
 
 bool Cell::isFinished() {
-	return mState == FINISHED;
+	return mOneCycleFinished;
 }

@@ -14,14 +14,14 @@
 
 class Cell {
 public:
-	enum State {IMAGE, COLOR, TEXT, FINISHED};
+	enum State {IDLE, IMAGE, COLOR, TEXT, BLACK};
 	
 	Cell();
 	~Cell();
 	
 	void setup(glm::vec2 pos, glm::vec2 size,
 			   std::shared_ptr<class ImageInfoBundle> imageInfoBundle, int indexStart,
-			   float timeImage, float timeColor, float timeText);
+			   float timeImage, float timeColor, float timeText, float timeBlack);
 	// start to cycle rendering images from ImageInfoBundle
 	void cycle();
 	void update();
@@ -35,9 +35,10 @@ public:
 	// for cycling
 	int mIndexStart, mIndexCurrent;
 	// duration of each state
-	float mTimeImage, mTimeColor, mTimeText;
+	float mTimeImage, mTimeColor, mTimeText, mTimeBlack;
 	float mTimeStart;
 	State mState;
+	bool mOneCycleFinished;
 	
 	// how to render image and averaged color
 	glm::vec2 mPos, mSize;

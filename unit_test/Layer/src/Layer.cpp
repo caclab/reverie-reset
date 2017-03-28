@@ -29,8 +29,7 @@ void Layer::onLoaded() {
 
 	for (int i = 0; i < mCells.size(); i++) {
 		int startIndex = i % mImageInfoBundle->mImageInfos.size();
-		mCells[i].setup(glm::vec2(0), mCellSize, mImageInfoBundle, startIndex, 2, 2, 3);
-		mCells[i].cycle();
+		mCells[i].setup(glm::vec2(0), mCellSize, mImageInfoBundle, startIndex, 2, 2, 3, 1);
 	}
 }
 
