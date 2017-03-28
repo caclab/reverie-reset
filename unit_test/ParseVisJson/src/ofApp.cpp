@@ -50,16 +50,22 @@ void ofApp::onIdle( ofxLibwebsockets::Event& args ){
 //--------------------------------------------------------------
 void ofApp::onMessage( ofxLibwebsockets::Event& args ){	
 	auto visJson = ofJson::parse(args.message);
-	int index = 0;
-	for (auto& vis : visJson) {
-		std::cout << index++ << ": " << std::endl;
-		auto metaJson = ofJson::parse(vis.dump());
-		try {
-			std::cout << "\tcaption:" << metaJson.at("caption") << std::endl;
-			std::cout << "\timage_id:" << metaJson.at("image_id") << std::endl;
-		} catch (std::domain_error& e) {
-			std::cout << e.what() << std::endl;
+	try {
+		auto c1Json = ofJson::parse(visJson.at("c1").dump());
+		
+		int index = 0;
+		for (auto& meta : c1Json) {
+			std::cout << index++ << ": " << std::endl;
+			auto metaJson = ofJson::parse(meta.dump());
+			try {
+				std::cout << "\tcaption:" << metaJson.at("caption") << std::endl;
+				std::cout << "\timage_id:" << metaJson.at("image_id") << std::endl;
+			} catch (std::domain_error& e) {
+				std::cout << e.what() << std::endl;
+			}
 		}
+	} catch (std::domain_error& e) {
+		std::cout << e.what() << std::endl;
 	}
 }
 
