@@ -1,0 +1,18 @@
+bin/*
+!bin/data/
+
+# vs
+obj
+.vs
+*.db
+*.opendb
+*.rc
+
+# xcode
+Makefile
+*.xcconfig
+*.xcodeproj
+*.make
+*.plist
+
+!.gitignore
