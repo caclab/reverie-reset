@@ -88,10 +88,7 @@ void ofApp::drawWindow11(ofEventArgs & args) {
 
 //--------------------------------------------------------------
 void ofApp::onConnect( ofxLibwebsockets::Event& args ){
-	cout<<"on connected"<<endl;
-	mClient.send("c1$ready");
-	std::cout << "sending ready" << std::endl;
-}
+	cout<<"on connected"<<endl;}
 
 //--------------------------------------------------------------
 void ofApp::onOpen( ofxLibwebsockets::Event& args ){
@@ -112,19 +109,30 @@ void ofApp::onIdle( ofxLibwebsockets::Event& args ){
 void ofApp::onMessage( ofxLibwebsockets::Event& args ){
 	auto visJson = ofJson::parse(args.message);
 	try {
-		auto c1Json = ofJson::parse(visJson.at("c1").dump());
+		auto c1Json = ofJson::parse(visJson.at("1").dump());
 		
 		int index = 0;
+		ImageMetaBundle metaBundle;
+		
 		for (auto& meta : c1Json) {
 			std::cout << index++ << ": " << std::endl;
 			auto metaJson = ofJson::parse(meta.dump());
-			try {
-				std::cout << "\tcaption:" << metaJson.at("caption") << std::endl;
-				std::cout << "\timage_id:" << metaJson.at("image_id") << std::endl;
-			} catch (std::domain_error& e) {
-				std::cout << e.what() << std::endl;
-			}
+			
+			std::string text = metaJson.at("caption");
+			std::string id = metaJson.at("image_id");
+			
+			std::cout << "\tcaption:" << text << std::endl;
+			std::cout << "\timage_id:" << id << std::endl;
+			
+			std::string path = "http://192.168.1.190:5000/imgs/captioned/" +
+			id + ".jpg";
+			
+			std::cout << "\tpath:" << path << std::endl;
+			
+			metaBundle.add(path, text, true);
 		}
+		
+		mLayer->load(metaBundle);
 	} catch (std::domain_error& e) {
 		std::cout << e.what() << std::endl;
 	}
@@ -155,6 +163,11 @@ void ofApp::keyPressed(int key){
 			metaBundle.add("images/swamp.jpg", "swamp looks like mirror", false);
 			
 			mLayer->load(metaBundle);
+		}
+		case 's':
+		{
+			mClient.send("c1$ready");
+			std::cout << "sending ready" << std::endl;
 		}
 			break;
 		default:
