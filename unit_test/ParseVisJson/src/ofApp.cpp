@@ -48,10 +48,11 @@ void ofApp::onIdle( ofxLibwebsockets::Event& args ){
 }
 
 //--------------------------------------------------------------
-void ofApp::onMessage( ofxLibwebsockets::Event& args ){	
+void ofApp::onMessage( ofxLibwebsockets::Event& args ){
+	std::cout << args.message << std::endl;
 	auto visJson = ofJson::parse(args.message);
 	try {
-		auto c1Json = ofJson::parse(visJson.at("c1").dump());
+		auto c1Json = ofJson::parse(visJson.at("1").dump());
 		
 		int index = 0;
 		for (auto& meta : c1Json) {
