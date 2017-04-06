@@ -22,6 +22,20 @@ var conversionPath = __dirname + config.server_config.conversionPath;
 var neuralCommand = config.server_config.neuralCommand;
 var statusPath = __dirname + config.server_config.statusPath;
 var systemInterval = config.server_config.systemInterval;
+var clients = config.server_config.clients;
+var screensPerLayer = config.server_config.screensPerLayer;
+
+var numberOfClients = 0;
+var toCompare = [];
+for (var key in clients) {
+    if (clients.hasOwnProperty(key)) {
+        console.log(key + " -> " + clients[key]);
+        if (clients[key]) {
+            toCompare.push(key);
+            numberOfClients++;
+        }
+    }
+}
 
 app.use(fileUpload());
 
@@ -128,22 +142,33 @@ function prepareDataForClient(callback) {
         if (err) { console.log(err); }
         var income = JSON.parse(visData);
         var toSendTotal = {};
-        var toSend = {};
-        for (var c = 0; c < 5; c++) {
-            for (var i = 0; i < 12; i++) {
+        for (var c = 0; c < numberOfClients; c++) {
+            var toSend = {};
+            for (var i = 0; i < screensPerLayer; i++) {
                 toSend[i + 1] = income[Math.floor(Math.random() * income.length)];
                 //console.log(toSend[i]);
-                if (i == 11) {
+                if (i == screensPerLayer - 1) {
                     toSendTotal[c + 1] = toSend;
                 }
             }
-            if (c == 4) {
+            if (c == numberOfClients - 1) {
                 callback(toSendTotal);
                 //client_status = "";
-                wwws.send(JSON.stringify(toSend));
+                wwws.send(JSON.stringify(toSendTotal));
             }
         }
     });
+}
+
+//compare contents of 2 arrays
+Array.prototype.compare = function(testArr) {
+    if (this.length != testArr.length) return false;
+    for (var i = 0; i < testArr.length; i++) {
+        if (this[i].compare) { //To test values in nested arrays
+            if (!this[i].compare(testArr[i])) return false;
+        } else if (this[i] !== testArr[i]) return false;
+    }
+    return true;
 }
 
 //Function to recursivelly check for any changes in the system:
@@ -179,18 +204,17 @@ function generalSystemInterval() {
 
                         //Check and validate all connected clients
                         //Then send random data to clients
-                        var toCompare = ['c1', 'c2', 'c3', 'c4', 'c5'];
-                        if (client_status.length == 5 && client_status.every(function(u, i) {
-                                return u === toCompare[i];
-                            })) {
-                            console.log("Preparing DATA to Send to clients!");
+                        if (client_status.sort().compare(toCompare.sort())) {
+                            console.log("\nPreparing DATA to Send to clients!\n");
                             prepareDataForClient(function(toSend) {
                                 console.log(toSend);
                             });
                         } else {
-                            console.log("ERROR with connected clients");
+                            console.log("\nERROR with connected clients");
                             console.log("No data was sent!");
                             console.log("Make sure all clients are connected!");
+                            console.log("Current connected clients:", client_status);
+                            console.log("Expected connected clients:", toCompare, "\n");
                         }
 
                         if (totalIndex > imgInx) {
@@ -291,7 +315,7 @@ CLIENTS CONNECT AND SEND:
     c4$ready
     c5$ready
 
-IF NO NEW IMAGE UPLOAD SERVER SENDS OUT
+IF THERE IS NO NEW IMAGE UPLOAD, THE SERVER SENDS OUT
 A JSON OBJECT WITH ALL RANDOM DATA:    
     
     {
@@ -308,7 +332,7 @@ A JSON OBJECT WITH ALL RANDOM DATA:
                     .
                     .
                     .
-                (12 objects in total all random)
+                (12 objects in total, all random)
             },
         "c2":
             {
@@ -325,19 +349,42 @@ A JSON OBJECT WITH ALL RANDOM DATA:
 */
 
 var client_status = [];
+var client_ips = [];
 var wwws;
 //Create websocket server
 const wss = new WebSocket.Server({ port: SPORT });
 wss.on('connection', function connection(ws) {
     wwws = ws;
     console.log('Client connected!');
+    var tmpIp = ws._socket.remoteAddress;
+    tmpIp = tmpIp.split("::");
+    tmpIp = tmpIp[1].split(":");
+    console.log(tmpIp[1]);
+    client_ips.push(tmpIp[1]);
+    console.log("CURRENT CONNECTED CLIENTS:", client_ips);
+
     ws.on('message', function incoming(message) {
         console.log('received: %s', message);
         var tmp = message.split('$');
         if (tmp[1] == 'ready') {
             client_status.push(tmp[0]);
-            console.log(client_status);
+            //console.log(client_status);
         }
+    });
+    ws.on('close', function close(data) {
+        console.log('disconnected');
+        var tmp_client_ips = [];
+        wss.clients.forEach(function each(client) {
+            if (client.readyState === WebSocket.OPEN) {
+                console.log(client._socket.remoteAddress);
+                var tmpIp = client._socket.remoteAddress;
+                tmpIp = tmpIp.split("::");
+                tmpIp = tmpIp[1].split(":");
+                tmp_client_ips.push(tmpIp[1]);
+            }
+        });
+        client_ips = tmp_client_ips;
+        console.log("CURRENT CONNECTED CLIENTS:", client_ips);
     });
 });
 

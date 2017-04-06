@@ -1,8 +1,16 @@
 {
     "server_config": {
-    	"PORT":5000,
-    	"SPORT":8001,
-    	"systemInterval": 30000,
+    	"PORT": 5000,
+    	"SPORT": 8001,
+    	"clients": {
+    		"c1":true,
+    		"c2":false,
+    		"c3":false,
+    		"c4":false,
+    		"c5":false
+    	},
+    	"screensPerLayer": 12,
+    	"systemInterval": 60000,
     	"statusPath":"/status.json",
     	"uploadPath":"/public/imgs/uploaded/",
     	"captionedPath":"/public/imgs/captioned/",

@@ -41,7 +41,7 @@ User are invited to scan a QR code which takes them to a local url. Here they ca
 
 The way it keeps order of the images is as follows:
 
-a. It checks for the total number of images that are already saved in the /public/imgs/captioned/ folder. If there are, lets say, 54 images already saved and captioned, it starts the neural network with the image_index 55. The new images in the conversion folder will be saved as 55.jpg, 56.jpg, 57.jpg and so on. The same goes to the vis.jaon file where the captions are saved, it will add them:
+a. It checks for the total number of images that are already saved in the /public/imgs/captioned/ folder. If there are, lets say, 54 images already saved and captioned, it starts the neural network with the image_index 55. The new images in the conversion folder will be saved as 55.jpg, 56.jpg, 57.jpg and so on. The same goes to the vis.json file where the captions are saved, it will add them:
 
 		[
 			.
