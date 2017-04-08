@@ -32,11 +32,16 @@ public:
 	//protected:
 	
 	void loadMetaBundle();
+	void sendReady();
 
 	std::vector<Cell> mCells;
 	glm::vec2 mCellSize;
 	std::shared_ptr<ImageInfoBundle> mImageInfoBundle;
 	ImageMetaBundle mImageMetaBundle;
+	
+	bool mLoading;
+	bool mReadySent;
+	ofEvent<void> mReadyEvent;
 };
 
 #endif /* Layer_hpp */

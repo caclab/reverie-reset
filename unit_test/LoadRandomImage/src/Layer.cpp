@@ -12,6 +12,9 @@ Layer::Layer() {
 	mImageInfoBundle = std::make_shared<ImageInfoBundle>();
 
 	ofAddListener(mImageInfoBundle->mLoadedEvent, this, &Layer::onLoaded);
+	
+	mLoading = false;
+	mReadySent = true;
 }
 
 Layer::~Layer() {
@@ -29,11 +32,14 @@ void Layer::onLoaded() {
 
 	for (int i = 0; i < mCells.size(); i++) {
 		int startIndex = i % mImageInfoBundle->mImageInfos.size();
-		mCells[i].setup(glm::vec2(0), mCellSize, mImageInfoBundle, startIndex, 1, 1, 1, 1);
+		mCells[i].setup(glm::vec2(0), mCellSize, mImageInfoBundle, startIndex,
+						ofRandom(5, 10), ofRandom(1, 3), ofRandom(5, 10), ofRandom(1));
 	}
 	
 	// clear image meta bundle
 	mImageMetaBundle.mImageMetas.clear();
+	mLoading = false;
+	mReadySent = false;
 }
 
 bool Layer::isCellFinished() {
@@ -54,6 +60,7 @@ void Layer::update() {
 	}
 	
 	loadMetaBundle();
+	sendReady();
 }
 
 void Layer::draw() {
@@ -84,7 +91,16 @@ void Layer::load(const ImageMetaBundle& metaBundle) {
 
 void Layer::loadMetaBundle() {
 	// all cell finished and image meta bundle is new
-	if (isCellFinished() && mImageMetaBundle.mImageMetas.size() > 0) {
+	if (!mLoading && isCellFinished() &&
+		mImageMetaBundle.mImageMetas.size() > 0) {
 		mImageInfoBundle->load(mImageMetaBundle);
+		mLoading = true;
+	}
+}
+
+void Layer::sendReady() {
+	if (!mReadySent && isCellFinished()) {
+		ofNotifyEvent(mReadyEvent, this);
+		mReadySent = true;
 	}
 }

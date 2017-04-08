@@ -13,6 +13,8 @@ void ofApp::setup(){
 	mClient.connect(options);
 	mClient.addListener(this);
 	ofSetLogLevel(OF_LOG_NOTICE);
+	
+	ofAddListener(mLayer->mReadyEvent, this, &ofApp::onReady);
 }
 
 //--------------------------------------------------------------
@@ -22,7 +24,7 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-	ofBackground(0, 0, 255);
+	ofBackground(0);
 
 	mLayer->draw(0);
 
@@ -88,11 +90,16 @@ void ofApp::drawWindow11(ofEventArgs & args) {
 
 //--------------------------------------------------------------
 void ofApp::onConnect( ofxLibwebsockets::Event& args ){
-	cout<<"on connected"<<endl;}
+	cout<<"on connected"<<endl;
+}
 
 //--------------------------------------------------------------
 void ofApp::onOpen( ofxLibwebsockets::Event& args ){
 	cout<<"on open"<<endl;
+//	mClient.send("c1$connected");
+//	std::cout << "sending connected" << std::endl;
+	mClient.send("c1$ready");
+	std::cout << "sending ready" << std::endl;
 }
 
 //--------------------------------------------------------------
@@ -143,6 +150,13 @@ void ofApp::onBroadcast( ofxLibwebsockets::Event& args ){
 	cout<<"got broadcast "<<args.message<<endl;
 }
 
+// Layer event
+void ofApp::onReady() {
+	std::cout << "layer ready" << std::endl;
+	mClient.send("c1$ready");
+	std::cout << "sending ready" << std::endl;
+}
+
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
 	switch (key) {
@@ -164,6 +178,7 @@ void ofApp::keyPressed(int key){
 			
 			mLayer->load(metaBundle);
 		}
+			break;
 		case 's':
 		{
 			mClient.send("c1$ready");

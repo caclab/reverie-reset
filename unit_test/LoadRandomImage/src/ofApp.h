@@ -50,4 +50,7 @@ public:
 	void onIdle( ofxLibwebsockets::Event& args );
 	void onMessage( ofxLibwebsockets::Event& args );
 	void onBroadcast( ofxLibwebsockets::Event& args );
+	
+	// Layer event
+	void onReady();
 };

@@ -27,7 +27,7 @@ ImageInfo::ImageInfo() {
 	mText = "";
 	mIsLoaded = false;
 	mImageProcesser = std::make_shared<ImageProcesser>();
-	mAvgColor = ofColor(0, 0, 255);
+	mAvgColor = ofColor(0, 0, 0);
 }
 
 ImageInfo::~ImageInfo() {

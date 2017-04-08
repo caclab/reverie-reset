@@ -71,16 +71,25 @@ void Cell::update() {
 			break;
 		case BLACK:
 			if (timeCurrent - mTimeStart >= mTimeBlack) {
-				int indexNext = (mIndexCurrent + 1) % mImageInfoBundle->mImageInfos.size();
-				if (indexNext == mIndexStart) {
-					// one cycle finished
-					mOneCycleFinished = true;
+				int totalSize = mImageInfoBundle->mImageInfos.size();
+				if (totalSize > 0) {
+					int currentIndex;
+					if (mIndexCurrent < mIndexStart) {
+						currentIndex = mIndexCurrent + totalSize;
+					} else {
+						currentIndex = mIndexCurrent;
+					}
+					if (currentIndex - mIndexStart > 0) {
+						// one cycle finished
+						mOneCycleFinished = true;
+					}
+					
+					int indexNext = (mIndexCurrent + 1) % totalSize;
+					// cycle not finished, switch to next image
+					mIndexCurrent = indexNext;
+					mState = IMAGE;
+					mTimeStart = timeCurrent;
 				}
-				
-				// cycle not finished, switch to next image
-				mIndexCurrent = indexNext;
-				mState = IMAGE;
-				mTimeStart = timeCurrent;
 			}
 			break;
 		default:
