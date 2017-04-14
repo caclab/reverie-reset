@@ -1,0 +1,35 @@
+{
+    "server_config": {
+    	"PORT": 8080,
+    	"SPORT": 8001,
+    	"clients": {
+    		"c1":true,
+    		"c2":false,
+    		"c3":false,
+    		"c4":false,
+    		"c5":false
+    	},
+    	"screensPerLayer": 12,
+    	"systemInterval": 60000,
+    	"statusPath":"/status.json",
+    	"uploadPath":"/public/imgs/uploaded/",
+    	"captionedPath":"/public/imgs/captioned/",
+    	"conversionPath": "/public/imgs/conversion/",
+        "neuralNetServerAddress": "http://localhost:5000/caption/",
+    	"about":["||||||||||||||||||||||||||||||||||||||",
+			    "|||||||||REVERIE RESET SERVER|||||||||",
+			    "||||||||||||||||||||||||||||||||||||||",
+			    "",
+			    "AUTHOR: fito_segrera / http://fii.to",
+			    "A@T reasearch and creation project",
+			    "In collaboration with Yanlei",
+			    "Chronus Art Center, Shanghai / 2017",
+			    "LAB'S website: http://lab.chronusartcenter.org",
+			    "",
+			    "[LOG]:",
+			    "",
+			    "HTTP Server listening on port",
+			    "WS Server listening on port",
+				""]
+    }
+}

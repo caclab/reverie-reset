@@ -1,5 +1,6 @@
 # exclude everything
 server/node_modules/
+rr-server/node_modules/
 server/public/imgs/uploads/*
 server/public/imgs/captioned/*
 server/public/imgs/conversion/*
