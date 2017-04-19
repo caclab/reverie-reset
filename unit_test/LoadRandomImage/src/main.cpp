@@ -27,17 +27,18 @@ int main( ){
 	funcs.push_back(&ofApp::drawWindow01);
 	funcs.push_back(&ofApp::drawWindow02);
 	funcs.push_back(&ofApp::drawWindow03);
-	
 	funcs.push_back(&ofApp::drawWindow04);
 	funcs.push_back(&ofApp::drawWindow05);
 	funcs.push_back(&ofApp::drawWindow06);
-	
 	funcs.push_back(&ofApp::drawWindow07);
 	funcs.push_back(&ofApp::drawWindow08);
 	funcs.push_back(&ofApp::drawWindow09);
-	
 	funcs.push_back(&ofApp::drawWindow10);
 	funcs.push_back(&ofApp::drawWindow11);
+	funcs.push_back(&ofApp::drawWindow12);
+	funcs.push_back(&ofApp::drawWindow13);
+	funcs.push_back(&ofApp::drawWindow14);
+	funcs.push_back(&ofApp::drawWindow15);
 	
 	std::shared_ptr<ofApp> mainApp(new ofApp);
 	for (int i = 0; i < WINDOW_NUM - 1; i++) {

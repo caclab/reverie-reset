@@ -7,7 +7,7 @@ void ofApp::setup(){
 	
 	ofSetLogLevel(OF_LOG_VERBOSE);
 	ofxLibwebsockets::ClientOptions options = ofxLibwebsockets::defaultClientOptions();
-	options.host = "192.168.1.190";
+	options.host = "192.168.1.150";
 	options.port = 8001;
 	
 	mClient.connect(options);
@@ -34,58 +34,78 @@ void ofApp::draw(){
 }
 
 void ofApp::drawWindow01(ofEventArgs & args) {
-	ofBackground(20);
+	ofBackground(15);
 	mLayer->draw(1);
 }
 
 void ofApp::drawWindow02(ofEventArgs & args) {
-	ofBackground(40);
+	ofBackground(30);
 	mLayer->draw(2);
 }
 
 void ofApp::drawWindow03(ofEventArgs & args) {
-	ofBackground(60);
+	ofBackground(45);
 	mLayer->draw(3);
 }
 
 void ofApp::drawWindow04(ofEventArgs & args) {
-	ofBackground(80);
+	ofBackground(60);
 	mLayer->draw(4);
 }
 
 void ofApp::drawWindow05(ofEventArgs & args) {
-	ofBackground(100);
+	ofBackground(75);
 	mLayer->draw(5);
 }
 
 void ofApp::drawWindow06(ofEventArgs & args) {
-	ofBackground(120);
+	ofBackground(90);
 	mLayer->draw(6);
 }
 
 void ofApp::drawWindow07(ofEventArgs & args) {
-	ofBackground(140);
+	ofBackground(105);
 	mLayer->draw(7);
 }
 
 void ofApp::drawWindow08(ofEventArgs & args) {
-	ofBackground(160);
+	ofBackground(120);
 	mLayer->draw(8);
 }
 
 void ofApp::drawWindow09(ofEventArgs & args) {
-	ofBackground(180);
+	ofBackground(135);
 	mLayer->draw(9);
 }
 
 void ofApp::drawWindow10(ofEventArgs & args) {
-	ofBackground(200);
+	ofBackground(150);
 	mLayer->draw(10);
 }
 
 void ofApp::drawWindow11(ofEventArgs & args) {
-	ofBackground(220);
+	ofBackground(165);
 	mLayer->draw(11);
+}
+
+void ofApp::drawWindow12(ofEventArgs & args) {
+	ofBackground(180);
+	mLayer->draw(12);
+}
+
+void ofApp::drawWindow13(ofEventArgs & args) {
+	ofBackground(195);
+	mLayer->draw(13);
+}
+
+void ofApp::drawWindow14(ofEventArgs & args) {
+	ofBackground(210);
+	mLayer->draw(14);
+}
+
+void ofApp::drawWindow15(ofEventArgs & args) {
+	ofBackground(225);
+	mLayer->draw(15);
 }
 
 //--------------------------------------------------------------
@@ -131,7 +151,7 @@ void ofApp::onMessage( ofxLibwebsockets::Event& args ){
 			std::cout << "\tcaption:" << text << std::endl;
 			std::cout << "\timage_id:" << id << std::endl;
 			
-			std::string path = "http://192.168.1.190:5000/imgs/captioned/" +
+			std::string path = "http://192.168.1.150:8080/imgs/captioned/" +
 			id + ".jpg";
 			
 			std::cout << "\tpath:" << path << std::endl;

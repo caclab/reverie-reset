@@ -108,15 +108,55 @@ void Cell::draw() {
 			ofDrawRectangle(mPos, mSize.x, mSize.y);
 			break;
 		case TEXT:
+		{
 			ofSetColor(mImageInfoBundle->mImageInfos[mIndexCurrent]->mAvgColor);
 			ofDrawRectangle(mPos, mSize.x, mSize.y);
 			ofSetColor(255);
 			ofPushMatrix();
-			ofTranslate(mPos + mSize * 0.5f);
-			ofScale(mScaleText);
-			mFont.drawStringAsShapes(mImageInfoBundle->mImageInfos[mIndexCurrent]->mText,
-									 mPosText.x, mPosText.y);
+//			ofTranslate(mPos + mSize * 0.5f);
+//			ofScale(mScaleText);
+			
+			std::string newString = "";
+			
+			std::vector<std::string> words = ofSplitString(mImageInfoBundle->mImageInfos[mIndexCurrent]->mText, " ", true, true);
+			
+			float maxWidth = mSize.x * 0.6f;
+			float width = 0;
+			
+			for (auto& word : words) {
+				std::string newWord;
+				if (newString.size() > 0) {
+					newWord = " " + word;
+				} else {
+					newWord = word;
+				}
+				
+				width += mFont.stringWidth(newWord);
+				
+				if (width > maxWidth) {
+					newString += "\n";
+					width = mFont.stringWidth(word);
+					newString += word;
+				} else {
+					newString += newWord;
+				}
+			}
+			
+			newString += ".";
+			
+			try {
+				newString = ofToUpper(newString.substr(0, 1)) + newString.substr(1);
+			} catch (std::exception& e) {
+				std::cout << e.what() << std::endl;
+			}
+			
+			mFont.drawStringCentered(newString, mPos.x + mSize.x * 0.5f,
+									 mPos.y + mSize.y * 0.5f);
+			
+//			mFont.drawStringAsShapes(mImageInfoBundle->mImageInfos[mIndexCurrent]->mText,
+//									 mPosText.x, mPosText.y);
 			ofPopMatrix();
+		}
 			break;
 		case BLACK:
 			ofSetColor(0);

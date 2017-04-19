@@ -4,9 +4,11 @@
 #include "Layer.hpp"
 #include "ofxLibwebsockets.h"
 
+//const float WINDOW_WIDTH = 90;
+//const float WINDOW_HEIGHT = 50.625;
 const float WINDOW_WIDTH = 1280;
 const float WINDOW_HEIGHT = 720;
-const int WINDOW_NUM = 12;
+const int WINDOW_NUM = 16;
 
 class ofApp : public ofBaseApp{
 	
@@ -38,6 +40,10 @@ public:
 	void drawWindow09(ofEventArgs & args);
 	void drawWindow10(ofEventArgs & args);
 	void drawWindow11(ofEventArgs & args);
+	void drawWindow12(ofEventArgs & args);
+	void drawWindow13(ofEventArgs & args);
+	void drawWindow14(ofEventArgs & args);
+	void drawWindow15(ofEventArgs & args);
 	
 	std::shared_ptr<Layer> mLayer;
 	

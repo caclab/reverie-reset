@@ -11,6 +11,7 @@
 
 #include <memory>
 #include "ofMain.h"
+#include "ofxCenteredTrueTypeFont.h"
 
 class Cell {
 public:
@@ -43,7 +44,7 @@ public:
 	// how to render image and averaged color
 	glm::vec2 mPos, mSize;
 	// how to render text, mPosText is relative position to image center
-	ofTrueTypeFont mFont;
+	ofxCenteredTrueTypeFont mFont;
 	glm::vec2 mPosText;
 	float mScaleText;
 };
