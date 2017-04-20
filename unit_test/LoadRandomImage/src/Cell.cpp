@@ -32,7 +32,7 @@ void Cell::setup(glm::vec2 pos, glm::vec2 size,
 	mTimeBlack = timeBlack;
 	
 	mIndexCurrent = mIndexStart;
-	mScaleText = size.y / 720;
+	mScaleText = size.y / ORIGINAL_HEIGHT;
 	
 	cycle();
 }
@@ -57,10 +57,40 @@ void Cell::update() {
 				mState = TEXT;
 				mTimeStart = timeCurrent;
 				
-				std::string text = mImageInfoBundle->mImageInfos[mIndexCurrent]->mText;
-				float textWidth = mFont.stringWidth(text);
-				mPosText.x = textWidth * -0.5f;
-				mPosText.y = 0;
+				// wrap text based on cell width
+				mWrappedText = "";
+				
+				std::vector<std::string> words = ofSplitString(mImageInfoBundle->mImageInfos[mIndexCurrent]->mText, " ", true, true);
+				
+				float maxWidth = ORIGINAL_WIDTH * 0.6f;
+				float width = 0;
+				
+				for (auto& word : words) {
+					std::string newWord;
+					if (mWrappedText.size() > 0) {
+						newWord = " " + word;
+					} else {
+						newWord = word;
+					}
+					
+					width += mFont.stringWidth(newWord);
+					
+					if (width > maxWidth) {
+						mWrappedText += "\n";
+						width = mFont.stringWidth(word);
+						mWrappedText += word;
+					} else {
+						mWrappedText += newWord;
+					}
+				}
+				
+				mWrappedText += ".";
+				
+				try {
+					mWrappedText = ofToUpper(mWrappedText.substr(0, 1)) + mWrappedText.substr(1);
+				} catch (std::exception& e) {
+					std::cout << e.what() << std::endl;
+				}
 			}
 			break;
 		case TEXT:
@@ -108,55 +138,15 @@ void Cell::draw() {
 			ofDrawRectangle(mPos, mSize.x, mSize.y);
 			break;
 		case TEXT:
-		{
 			ofSetColor(mImageInfoBundle->mImageInfos[mIndexCurrent]->mAvgColor);
 			ofDrawRectangle(mPos, mSize.x, mSize.y);
 			ofSetColor(255);
 			ofPushMatrix();
-//			ofTranslate(mPos + mSize * 0.5f);
-//			ofScale(mScaleText);
-			
-			std::string newString = "";
-			
-			std::vector<std::string> words = ofSplitString(mImageInfoBundle->mImageInfos[mIndexCurrent]->mText, " ", true, true);
-			
-			float maxWidth = mSize.x * 0.6f;
-			float width = 0;
-			
-			for (auto& word : words) {
-				std::string newWord;
-				if (newString.size() > 0) {
-					newWord = " " + word;
-				} else {
-					newWord = word;
-				}
-				
-				width += mFont.stringWidth(newWord);
-				
-				if (width > maxWidth) {
-					newString += "\n";
-					width = mFont.stringWidth(word);
-					newString += word;
-				} else {
-					newString += newWord;
-				}
-			}
-			
-			newString += ".";
-			
-			try {
-				newString = ofToUpper(newString.substr(0, 1)) + newString.substr(1);
-			} catch (std::exception& e) {
-				std::cout << e.what() << std::endl;
-			}
-			
-			mFont.drawStringCentered(newString, mPos.x + mSize.x * 0.5f,
-									 mPos.y + mSize.y * 0.5f);
-			
-//			mFont.drawStringAsShapes(mImageInfoBundle->mImageInfos[mIndexCurrent]->mText,
-//									 mPosText.x, mPosText.y);
+			ofTranslate(mPos);
+			ofScale(mScaleText);
+			mFont.drawStringCentered(mWrappedText, ORIGINAL_WIDTH * 0.5f,
+									 ORIGINAL_HEIGHT * 0.5f);
 			ofPopMatrix();
-		}
 			break;
 		case BLACK:
 			ofSetColor(0);

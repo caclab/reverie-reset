@@ -32,6 +32,9 @@ public:
 	
 	// protected
 	
+	const float ORIGINAL_WIDTH = 1280.0f;
+	const float ORIGINAL_HEIGHT = 720.0f;
+	
 	std::shared_ptr<class ImageInfoBundle> mImageInfoBundle;
 	// for cycling
 	int mIndexStart, mIndexCurrent;
@@ -43,9 +46,9 @@ public:
 	
 	// how to render image and averaged color
 	glm::vec2 mPos, mSize;
-	// how to render text, mPosText is relative position to image center
+	// how to render text
+	std::string mWrappedText;
 	ofxCenteredTrueTypeFont mFont;
-	glm::vec2 mPosText;
 	float mScaleText;
 };
 
