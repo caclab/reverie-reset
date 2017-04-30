@@ -18,6 +18,8 @@ BundleBuffer::BundleBuffer() {
 	
 	ofAddListener(mPing->mLoadedEvent, this, &BundleBuffer::onLoaded);
 	ofAddListener(mPong->mLoadedEvent, this, &BundleBuffer::onLoaded);
+	
+	mLoading = false;
 }
 
 BundleBuffer::~BundleBuffer() {
