@@ -71,6 +71,7 @@ void Cell::random() {
 
 void Cell::boom() {
 	mIsNew = true;
+	mBackToRandom = false;
 	
 	mImageInfoBundle = mNewBundleBuffer->getNext();
 	// ImageInfoBundle in mNewBundleBuffer has only 1 image
@@ -238,7 +239,6 @@ void Cell::cycle(float timeCurrent) {
 		if (!mOneCycleFinished && currentIndex - mIndexStart > 0) {
 			// one cycle finished
 			mOneCycleFinished = true;
-			std::cout << mId << " finished" << std::endl;
 		}
 		
 		int indexNext = (mIndexCurrent + 1) % totalSize;
@@ -274,7 +274,15 @@ void Cell::randomStateInBlack(float timeCurrent) {
 }
 
 void Cell::newStateInBlack(float timeCurrent) {
-	mOneCycleFinished = true;
+	// use this flag here to prevent send READY message
+	// at the beginning of switch to RANDOM state
+	if (!mBackToRandom) {
+		// tell Layer this one ready when entering BLACK mode
+		// instead of exiting BLACK mode in RANDOM state,
+		// in order to switch naturally if next message from server
+		// is also a NEW image
+		mOneCycleFinished = true;
+	}
 	
 	if (timeCurrent - mTimeStart >= mTimeBlack) {
 		if (mBackToRandom) {
