@@ -26,6 +26,10 @@ var clients = config.server_config.clients;
 var screensPerLayer = config.server_config.screensPerLayer;
 var neuralNetServerAddress = config.server_config.neuralNetServerAddress;
 
+var stateSwitch = "r"; // r for random, n for new-image-upload
+var newImageCounter = 0; // keeps track of how many new images are uploaded
+var newImageQue = 0;
+
 ////////////////
 //GET LOCAL IP//
 ////////////////
@@ -53,21 +57,106 @@ Object.keys(ifaces).forEach(function(ifname) {
     });
 });
 
-/////////////////
-//SAVE VIS.JSON//
-/////////////////
-function saveVisJson() {
-    fs.readFile(captionedPath + "vis.json", 'utf-8', function(err, visData) {
-        console.log("SAVING DATA...");
+/////////////////////////////
+//LOAD CONTENTS OF VIS.JSON//
+/////////////////////////////
+var visDataTMP;
+
+function loadVisFile() {
+    fs.readFile(captionedPath + 'vis.json', 'utf-8', function(err, content) {
         if (err) { console.log(err); }
-        var income = JSON.parse(visData);
-        fs.writeFileSync(captionedPath + "vis.json", visDataTMP, function(err) {
-            if (err) {
-                return console.error(err);
+        visDataTMP = JSON.parse(content);
+
+        //COMPARE TOTAL CAPTIONS WITH TOTAL IMAGES IN CAPTIONED FOLDER
+        //IF THERE ARE LESS CAPTIONED ITEMS THEN DELETE THE EXCEDING IMAGES
+        console.log("TOTAL CAPTIONED IMAGES:", visDataTMP.length);
+        if (status - 1 > visDataTMP.length) {
+            console.log("\nDeleting extra images...");
+            var imgsToDelete = "";
+            for (var i = visDataTMP.length + 1; i < status; i++) {
+                console.log(i, ".jpg");
+                imgsToDelete += captionedPath + i.toString() + ".jpg ";
+                if (i == status - 1) {
+                    var deleteCommand = "sudo rm " + imgsToDelete;
+                    //console.log(deleteCommand);
+                    exec.exec(deleteCommand, function(error, stdout, stderr) {
+                        //console.log('stdout: ' + stdout);
+                        //console.log('stderr: ' + stderr);
+                        if (error !== null) {
+                            //console.log('exec error: ' + error);
+                        } else {
+                            console.log("\nExtra images deleted!");
+                        }
+                    });
+                }
             }
-        });
+        }
     });
 }
+
+////////////////////////////////////////////////////////////////////
+//AUTO-RESET in case there is leftover trash on the server folders//
+////////////////////////////////////////////////////////////////////
+var status; //save data from status.json
+var pathAutoRest = __dirname + "/auto_reset.js";
+exec.exec("node " + pathAutoRest + " -t", function(error, stdout, stderr) {
+    //console.log('stdout: ' + stdout);
+    //console.log('stderr: ' + stderr);
+    if (error !== null) {
+        //console.log('exec error: ' + error);
+    } else {
+        console.log("AUTO RESET DONE!");
+        //get data from status file from previous session
+        fs.readFile(statusPath, 'utf-8', function(err, content) {
+            if (err) { console.log(err); }
+            var obj = JSON.parse(content);
+            //console.log("IMAGE STATUS:", obj.image_status);
+            status = obj.image_status + 1;
+            console.log("STATUS:", status - 1, "images in database");
+            loadVisFile();
+        });
+    }
+});
+
+////////////////////////////////////////////////
+//CLOSE DOCKER IF IT IS RUNNING and RESTART IT//
+////////////////////////////////////////////////
+var exec = require('child_process');
+exec.exec('sudo docker run --name neuraltalk2-web -p 5000:5000 -v /home/reverie-reset/captiondata:/mounted jacopofar/neuraltalk2-web:latest', function(error, stdout, stderr) {
+    console.log('stdout: ' + stdout);
+    console.log('stderr: ' + stderr);
+    if (error !== null) {
+        console.log('exec error: ' + error);
+        exec.exec('sudo docker ps -aqf "name=neuraltalk2-web"', function(error, stdout, stderr) {
+            console.log(stdout);
+            //console.log('stderr: ' + stderr);
+            if (error !== null) {
+                console.log('exec error: ' + error);
+            } else {
+                exec.exec('sudo docker rm -fv ' + stdout, function(error, stdout, stderr) {
+                    console.log('stdout: ' + stdout);
+                    console.log('stderr: ' + stderr);
+                    if (error !== null) {
+                        console.log('exec error: ' + error);
+                    } else {
+                        exec.exec('sudo docker run --name neuraltalk2-web -p 5000:5000 -v /home/reverie-reset/captiondata:/mounted jacopofar/neuraltalk2-web:latest', function(error, stdout, stderr) {
+                            console.log('stdout: ' + stdout);
+                            console.log('stderr: ' + stderr);
+                            if (error !== null) {
+                                console.log('exec error: ' + error);
+                            } else {
+                                console.log("docker app running on port 5000");
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    } else {
+        console.log("docker app running on port 5000");
+    }
+});
+
 
 /////////////////////////////////////
 //ON APP CLOSING OR CRASHING EVENTS//
@@ -110,29 +199,6 @@ for (var key in clients) {
         }
     }
 }
-
-////////////////////////////////////////////////////////////////////
-//AUTO-RESET in case there is leftover trash on the server folders//
-////////////////////////////////////////////////////////////////////
-var status; //save data from status.json
-var pathAutoRest = __dirname + "/auto_reset.js";
-exec.exec("node " + pathAutoRest + " -t", function(error, stdout, stderr) {
-    //console.log('stdout: ' + stdout);
-    //console.log('stderr: ' + stderr);
-    if (error !== null) {
-        //console.log('exec error: ' + error);
-    } else {
-        console.log("AUTO RESET DONE!");
-        //get data from status file from previous session
-        fs.readFile(statusPath, 'utf-8', function(err, content) {
-            if (err) { console.log(err); }
-            var obj = JSON.parse(content);
-            //console.log("IMAGE STATUS:", obj.image_status);
-            status = obj.image_status + 1;
-            console.log("STATUS:", status);
-        });
-    }
-});
 
 ////////////////////////////////////////////
 //SETUP EXPRESS APP AND WATCH FOLDER EVENT//
@@ -195,24 +261,6 @@ function readFiles(dirname, callback) {
     });
 }
 
-//////////////////////////////////////////
-//check all images ready to be displayed//
-//////////////////////////////////////////
-function getAllReadyImages(readyImagesPath, callback) {
-    readFiles(readyImagesPath, function(total) {
-        callback(total);
-    }, function(err) {
-        throw err;
-    }, function() {
-        // console.log("||||||||||||||||||||||||||||||||||||||");
-        // console.log("||||||||||Images In Database||||||||||");
-        // console.log("||||||||||||||||||||||||||||||||||||||");
-        // console.log("");
-        // console.log("PATH:", readyImagesPath);
-        // console.log("");
-    });
-}
-
 /////////////////////
 //Execute NeuralNet//
 /////////////////////
@@ -253,6 +301,10 @@ function runNeuralNet(iName, callback) {
                             clearInterval(getDataInterval);
                             totalData = { "image_id": status, "caption": data }
                             status++;
+                            newImageCounter++;
+                            newImageQue++;
+                            console.log("NEW IMAGE COUNTER:", newImageCounter);
+                            console.log("NEW IMAGE WAITING-LIST:", newImageQue, "\n");
                             callback(totalData);
                         } else if (tries > 20) {
                             clearInterval(getDataInterval);
@@ -260,14 +312,12 @@ function runNeuralNet(iName, callback) {
                             runAll();
                             tries = 0;
                         }
-
                         tries++;
                     });
                 }, 2000);
             }
         });
     }
-
     runAll();
 }
 
@@ -275,26 +325,71 @@ function runNeuralNet(iName, callback) {
 //Random data to display on screens//
 /////////////////////////////////////
 function prepareDataForClient(callback) {
-    fs.readFile(captionedPath + "vis.json", 'utf-8', function(err, visData) {
-        if (err) { console.log(err); }
-        var income = JSON.parse(visData);
-        var toSendTotal = {};
-        for (var c = 0; c < numberOfClients; c++) {
-            var toSend = {};
-            for (var i = 0; i < screensPerLayer; i++) {
-                toSend[i + 1] = income[Math.floor(Math.random() * income.length)];
+    if (newImageCounter == 1 || newImageQue > 0 && newImageCounter % 3 != 0) {
+        stateSwitch = "n";
+    } else {
+        stateSwitch = "r";
+    }
+
+    console.log("ACTUAL SYSTEM'S STATE", stateSwitch, "\n");
+
+    var income = visDataTMP;
+    var toSendTotal = {};
+    var totalImgs = income.length;
+
+    for (var c = 0; c < numberOfClients; c++) {
+        var toSend = {};
+        for (var i = 0; i < screensPerLayer; i++) {
+            if (stateSwitch == "r") {
+                var rchoice = Math.floor(Math.random() * income.length);
+                toSend[i + 1] = income[rchoice];
+                toSend[i + 1]['image_id'] = (toSend[i + 1]['image_id']).toString();
                 //console.log(toSend[i]);
-                if (i == screensPerLayer - 1) {
-                    toSendTotal[c + 1] = toSend;
-                }
+            } else if (stateSwitch == "n" && i == 1) {
+                toSend[i] = income[totalImgs - newImageQue];
+                toSend[i]['image_id'] = (toSend[i]['image_id']).toString();
             }
-            if (c == numberOfClients - 1) {
-                callback(toSendTotal);
-                //client_status = "";
-                wwws.send(JSON.stringify(toSendTotal));
+
+            if (i == screensPerLayer - 1) {
+                toSendTotal[c + 1] = toSend;
             }
         }
-    });
+
+        if (c == numberOfClients - 1) {
+            callback(toSendTotal);
+            wwws.send(JSON.stringify(toSendTotal));
+            if (stateSwitch == "n") {
+                newImageQue--;
+            }
+        }
+    }
+    // if (stateSwitch == "r") {
+    //     for (var c = 0; c < numberOfClients; c++) {
+    //         var toSend = {};
+    //         for (var i = 0; i < screensPerLayer; i++) {
+    //             var rchoice = Math.floor(Math.random() * income.length);
+    //             toSend[i + 1] = income[rchoice];
+    //             toSend[i + 1]['image_id'] = (toSend[i + 1]['image_id']).toString();
+    //             //console.log(toSend[i]);
+    //             if (i == screensPerLayer - 1) {
+    //                 toSendTotal[c + 1] = toSend;
+    //             }
+
+    //         }
+
+    //         if (c == numberOfClients - 1) {
+    //             callback(toSendTotal);
+    //             wwws.send(JSON.stringify(toSendTotal));
+    //         }
+    //     }
+    // } else if (stateSwitch == "n") {
+    //     var totalImgs = income.length;
+    //     toSendTotal = income[totalImgs - newImageQue];
+    //     toSendTotal['image_id'] = (toSendTotal['image_id']).toString();
+    //     newImageQue--;
+    //     callback(toSendTotal);
+    //     wwws.send(JSON.stringify(toSendTotal));
+    // }
 }
 
 ////////////////////////////////
@@ -316,30 +411,14 @@ Array.prototype.compare = function(testArr) {
 function generalSystemInterval() {
     setInterval(function() {
         console.log("\nNEW INTERVAL CYCLE!");
-        //Check and validate all connected clients
-        //Then send random data to clients
-        if (client_status.sort().compare(toCompare.sort())) {
-            console.log("\nPreparing DATA to Send to clients!\n");
-            prepareDataForClient(function(toSend) {
-                console.log(toSend);
-            });
-        } else {
-            console.log("\nERROR with connected clients");
-            console.log("No data was sent!");
-            console.log("Make sure all clients are connected!");
-            console.log("Current connected clients:", client_status);
-            console.log("Expected connected clients:", toCompare, "\n");
-        }
+        saveVisJson(visDataTMP);
     }, systemInterval);
 }
-
 generalSystemInterval();
-
 
 ////////////////////////////////////////
 //check for changes in UPLOADED folder//
 ////////////////////////////////////////
-var visDataTMP = [];
 watch.onChange(function(file, prev, curr, action) {
     if (action !== 'delete') {
         //console.log('FILE ADDED!!');
@@ -352,98 +431,78 @@ watch.onChange(function(file, prev, curr, action) {
                 imgtype = imgtype.ext;
                 //console.log("IMG TYPE", imgtype);
 
-                //Check if filetype is an image
-                if (imgtype == 'jpg' || imgtype == 'JPG' ||
-                    imgtype == 'png' || imgtype == 'PNG' ||
-                    imgtype == 'bpm' || imgtype == 'BPM' ||
-                    imgtype == 'jpeg' || imgtype == 'JPEG') {
+                Jimp.read(file, function(err, lenna) {
 
-                    Jimp.read(file, function(err, lenna) {
+                    if (err) {
+                        throw err;
+                    } else {
+                        var nameNoType = file.split('.' + imgtype);
+                        //console.log(nameNoType[0] + ".jpg");
+                        var imgName = randomstring.generate(10);
+                        lenna.write(conversionPath + imgName + ".jpg", function() {
+                            //console.log("IMG CONVERTED TO .jpg");
 
-                        if (err) {
-                            throw err;
-                        } else {
-                            var nameNoType = file.split('.' + imgtype);
-                            console.log(nameNoType[0] + ".jpg");
-                            var imgName = randomstring.generate(10);
-                            lenna.write(conversionPath + imgName + ".jpg", function() {
-                                //console.log("IMG CONVERTED TO .jpg");
-
-                                runNeuralNet("imgs/conversion/" + imgName + ".jpg", function(p) {
-                                    exec.exec("sudo mv " + conversionPath + imgName + ".jpg " + captionedPath + p.image_id + ".jpg", function(error, stdout, stderr) {
-                                        //console.log('stdout: ' + stdout);
-                                        //console.log('stderr: ' + stderr);
-                                        if (error !== null) {
-                                            console.log('exec error: ' + error);
-                                        } else {
-                                            console.log(p.image_id, ".jpg SAVED");
-                                            visDataTMP.push(p);
-                                            console.log(visDataTMP);
-                                            exec.exec("rm -r " + file, function(error, stdout, stderr) {
-                                                //console.log('stdout: ' + stdout);
-                                                //console.log('stderr: ' + stderr);
-                                                if (error !== null) {
-                                                    //console.log('exec error: ' + error);
-                                                }
-                                            });
-                                        }
-                                    });
+                            runNeuralNet("imgs/conversion/" + imgName + ".jpg", function(p) {
+                                exec.exec("sudo mv " + conversionPath + imgName + ".jpg " + captionedPath + p.image_id + ".jpg", function(error, stdout, stderr) {
+                                    //console.log('stdout: ' + stdout);
+                                    //console.log('stderr: ' + stderr);
+                                    if (error !== null) {
+                                        console.log('exec error: ' + error);
+                                    } else {
+                                        console.log(p.image_id, ".jpg SAVED");
+                                        visDataTMP.push(p);
+                                        //console.log(visDataTMP);
+                                        exec.exec("rm -r " + file, function(error, stdout, stderr) {
+                                            //console.log('stdout: ' + stdout);
+                                            //console.log('stderr: ' + stderr);
+                                            if (error !== null) {
+                                                //console.log('exec error: ' + error);
+                                            }
+                                        });
+                                    }
                                 });
                             });
-                        }
-                    });
-                }
+                        });
+                    }
+                });
             }
         });
     }
 });
 
-/*
-PROTOCOL
+/////////////////
+//SAVE VIS.JSON//
+/////////////////
+function saveVisJson(vtd) {
+    var toSave = JSON.stringify(vtd);
+    fs.writeFile(captionedPath + "vis.json", toSave, function(err) {
+        if (err) {
+            return console.error(err);
+        } else {
+            console.log("vis.json SAVED!\n");
+        }
+    });
+}
 
-SYSTEM INITIATED SERVER ONLINE + 
-CLIENTS CONNECT AND SEND:
-
-    c1$ready
-    c2$ready
-    c3$ready
-    c4$ready
-    c5$ready
-
-IF THERE IS NO NEW IMAGE UPLOAD, THE SERVER SENDS OUT
-A JSON OBJECT WITH ALL RANDOM DATA:    
-    
-    {
-        "c1": 
-            {
-                "1":{
-                        "image_id":"259",
-                        "caption":"a close up of a clock on a wall"
-                    },
-                "2":{
-                        "image_id":"126",
-                        "caption":"a man on the beach"
-                    },
-                    .
-                    .
-                    .
-                (12 objects in total, all random)
-            },
-        "c2":
-            {
-                (same here)
-            },
-        .
-        .
-        .
-        (All clients: c1, c2, c3, c4, c5)
+//////////////////////////////
+//Validate connected clients//
+//////////////////////////////
+function sortAndCompare(callback) {
+    if (client_ips.sort().compare(toCompare.sort())) {
+        console.log("\nPreparing DATA to Send to clients!\n");
+        callback();
+    } else {
+        console.log("\nERROR with connected clients");
+        console.log("No data was sent!");
+        console.log("Make sure all clients are connected!");
+        console.log("Current connected clients:", client_status);
+        console.log("Expected connected clients:", toCompare, "\n");
     }
+}
 
-
-
-*/
-
+///////////////////////////
 var client_status = [];
+var client_standby = [];
 var client_ips = [];
 var wwws;
 ///////////////////////////
@@ -465,7 +524,29 @@ wss.on('connection', function connection(ws) {
         var tmp = message.split('$');
         if (tmp[1] == 'ready') {
             client_status.push(tmp[0]);
-            //console.log(client_status);
+
+            if (client_status.length === toCompare.length) {
+                console.log("ALL CLIENTS READY");
+                //Check and validate all connected clients
+                sortAndCompare(function() {
+                    //Then send random data to clients
+                    prepareDataForClient(function(toSend) {
+                        console.log(toSend);
+                        client_status = [];
+                    });
+                });
+            }
+        } else if (tmp[1] == 'standby') {
+            client_standby.push(tmp[0]);
+            //Make sure all expected clients sent the STANDBY message
+            if (client_standby.length === toCompare.length) {
+                console.log("ALL CLIENTS STANDING BY");
+                //Check and validate all connected clients
+                sortAndCompare(function() {
+                    ws.send("BOOM");
+                    client_standby = [];
+                });
+            }
         }
     });
     ws.on('close', function close(data) {

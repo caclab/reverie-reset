@@ -3,13 +3,13 @@
     	"PORT": 8080,
     	"SPORT": 8001,
     	"clients": {
-    		"c1":true,
-    		"c2":false,
-    		"c3":false,
-    		"c4":false,
-    		"c5":false
+    		"192.168.1.151":false,
+    		"192.168.1.152":true,
+    		"192.168.1.30":false,
+    		"192.168.1.40":false,
+    		"192.168.1.50":false
     	},
-    	"screensPerLayer": 12,
+    	"screensPerLayer": 16,
     	"systemInterval": 60000,
     	"statusPath":"/status.json",
     	"uploadPath":"/public/imgs/uploaded/",

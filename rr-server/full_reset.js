@@ -19,7 +19,7 @@ function input(prompt, callback) {
 }
 
 function resetJsonFile(jsonFile) {
-    fs.writeFile(jsonFile, "{}", function(err) {
+    fs.writeFile(jsonFile, "[]", function(err) {
         if (err) {
             return console.error(err);
         }
