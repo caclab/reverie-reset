@@ -10,9 +10,6 @@ const float WINDOW_HEIGHT = 50.625;
 //const float WINDOW_HEIGHT = 720;
 const int WINDOW_NUM = 16;
 
-const std::string HOST = "192.168.1.150";
-const int PORT = 8001;
-
 class ofApp : public ofBaseApp{
 	
 public:
@@ -49,11 +46,10 @@ public:
 	void drawWindow14(ofEventArgs & args);
 	void drawWindow15(ofEventArgs & args);
 	
-	std::shared_ptr<Layer> mLayer;
+	// send message to server via websocket
+	void sendMessage(const std::string& msg);
 	
-	ofxLibwebsockets::Client mClient;
-	
-	// websocket methods
+	// websocket event
 	void onConnect( ofxLibwebsockets::Event& args );
 	void onOpen( ofxLibwebsockets::Event& args );
 	void onClose( ofxLibwebsockets::Event& args );
@@ -64,4 +60,15 @@ public:
 	// Layer event
 	void onReady();
 	void onStandby();
+	
+	std::shared_ptr<Layer> mLayer;
+	ofxLibwebsockets::Client mClient;
+	
+	// deserialize
+	void initConfig();
+	ofParameterGroup pParameters;
+	ofParameter<std::string> pHost;
+	ofParameter<int> pSocketPort;
+	ofParameter<int> pHttpPort;
+	ofParameter<std::string> pId;
 };

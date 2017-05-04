@@ -2,13 +2,15 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
+	initConfig();
+	
 	mLayer = std::make_shared<Layer>();
 	mLayer->setup(WINDOW_NUM, glm::vec2(WINDOW_WIDTH, WINDOW_HEIGHT));
 	
 	ofSetLogLevel(OF_LOG_VERBOSE);
 	ofxLibwebsockets::ClientOptions options = ofxLibwebsockets::defaultClientOptions();
-	options.host = HOST;
-	options.port = PORT;
+	options.host = pHost;
+	options.port = pSocketPort;
 	
 	mClient.connect(options);
 	mClient.addListener(this);
@@ -113,6 +115,10 @@ void ofApp::exit() {
 	ofRemoveListener(mLayer->mStandbyEvent, this, &ofApp::onStandby);
 }
 
+void ofApp::sendMessage(const std::string& msg) {
+	mClient.send("c" + pId.get() + "$" + msg);
+}
+
 //--------------------------------------------------------------
 void ofApp::onConnect( ofxLibwebsockets::Event& args ){
 	cout<<"on connected"<<endl;
@@ -121,7 +127,7 @@ void ofApp::onConnect( ofxLibwebsockets::Event& args ){
 //--------------------------------------------------------------
 void ofApp::onOpen( ofxLibwebsockets::Event& args ){
 	cout<<"on open"<<endl;
-	mClient.send("c1$ready");
+	sendMessage("ready");
 	std::cout << "sending ready" << std::endl;
 }
 
@@ -139,15 +145,16 @@ void ofApp::onIdle( ofxLibwebsockets::Event& args ){
 void ofApp::onMessage( ofxLibwebsockets::Event& args ){
 	if (args.message == "BOOM") {
 		std::cout << "\nBOOM\n" << std::endl;
+		mLayer->boom();
 	} else {
 		auto visJson = ofJson::parse(args.message);
 		try {
-			auto c1Json = ofJson::parse(visJson.at("1").dump());
+			auto cJson = ofJson::parse(visJson.at(pId.get()).dump());
 			
 			int index = 0;
 			ImageMetaBundle metaBundle;
 			
-			for (auto& meta : c1Json) {
+			for (auto& meta : cJson) {
 				std::cout << index++ << ": " << std::endl;
 				auto metaJson = ofJson::parse(meta.dump());
 				
@@ -157,8 +164,8 @@ void ofApp::onMessage( ofxLibwebsockets::Event& args ){
 				std::cout << "\tcaption:" << text << std::endl;
 				std::cout << "\timage_id:" << id << std::endl;
 				
-				std::string path = "http://" + HOST + ":8080/imgs/captioned/" +
-				id + ".jpg";
+				std::string path = "http://" + pHost.get() + ":" +
+				ofToString(pHttpPort.get()) + "/imgs/captioned/" + id + ".jpg";
 				
 				std::cout << "\tpath:" << path << std::endl;
 				
@@ -186,14 +193,28 @@ void ofApp::onBroadcast( ofxLibwebsockets::Event& args ){
 // Layer event
 void ofApp::onReady() {
 	std::cout << "layer ready" << std::endl;
-	mClient.send("c1$ready");
+	sendMessage("ready");
 	std::cout << "sending ready" << std::endl;
 }
 
 void ofApp::onStandby() {
 	std::cout << "layer standby" << std::endl;
-	mClient.send("c1$standby");
+	sendMessage("standby");
 	std::cout << "sending standby" << std::endl;
+}
+
+// deserialize
+void ofApp::initConfig() {
+	pParameters.setName("Network");
+	pParameters.add(pHost.set("Host", "192.168.1.150"));
+	pParameters.add(pSocketPort.set("Socket Port", 8001));
+	pParameters.add(pHttpPort.set("HTTP Port", 8080));
+	pParameters.add(pId.set("ID", "1"));
+	
+	ofXml xml;
+	if (xml.load("settings/network.xml")) {
+		ofDeserialize(xml, pParameters);
+	}
 }
 
 //--------------------------------------------------------------
@@ -221,18 +242,8 @@ void ofApp::keyPressed(int key){
 		case 'z':
 		{
 			ImageMetaBundle metaBundle;
-//			metaBundle.add("images/aurora.jpg", "aurora in the sky", false);
-//			metaBundle.add("images/boat.jpg", "fishing boat on beach", false);
 			metaBundle.add("images/bridge.jpg", "a bridge, that's huge", false);
 			metaBundle.add("images/city.jpg", "city skyline on river bank", false);
-//			metaBundle.add("images/desert.jpg", "sunset of desert", false);
-//			metaBundle.add("images/eagleview.jpg", "a town in eagles eye", false);
-//			metaBundle.add("images/grass.jpg", "forrest wake up in spring", false);
-//			metaBundle.add("images/island.jpg", "abandoned islands", false);
-//			metaBundle.add("images/lake.jpg", "lake surrounded by moutains", false);
-//			metaBundle.add("images/road.jpg", "road with dim light", false);
-//			metaBundle.add("images/sunset.jpg", "chilly sunset", false);
-//			metaBundle.add("images/swamp.jpg", "swamp looks like mirror", false);
 			
 			mLayer->loadRandom(metaBundle);
 		}

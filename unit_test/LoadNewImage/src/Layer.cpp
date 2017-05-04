@@ -23,6 +23,8 @@ Layer::Layer() {
 	
 	mReadySent = true;
 	mStandbySent = true;
+	
+	initConfig();
 }
 
 Layer::~Layer() {
@@ -35,16 +37,18 @@ void Layer::setup(int cellNum, glm::vec2 size) {
 	for (int i = 0; i < cellNum; i++) {
 		std::shared_ptr<Cell> cell = std::make_shared<Cell>();
 		cell->setup(i, mFont, glm::vec2(0), size, mRandomBundleBuffer, mNewBundleBuffer,
-					glm::vec2(1, 1), glm::vec2(1, 1), glm::vec2(1, 1), glm::vec2(1, 1),
+					glm::vec2(5, 10), glm::vec2(1, 3), glm::vec2(5, 10), glm::vec2(1, 1),
 					1, 1, 1, 1);
-//		cell->setup(i, mFont, glm::vec2(0), size, mRandomBundleBuffer, mNewBundleBuffer,
-//					glm::vec2(5, 10), glm::vec2(1, 3), glm::vec2(5, 10), glm::vec2(1, 1),
-//					1, 1, 1, 1);
 		
 		mRandomBundleBuffer->addUser(cell);
 		mNewBundleBuffer->addUser(cell);
 
 		mCells.push_back(cell);
+	}
+	
+	ofXml xml;
+	if (xml.load("settings/layer.xml")) {
+		ofDeserialize(xml, pParameters);
 	}
 }
 
@@ -138,26 +142,84 @@ void Layer::sendStandby() {
 	}
 }
 
-void Layer::timeImageChanged(float & time) {
+void Layer::initConfig() {
+	pParameters.setName("Layer");
+	pRandomStateGroup.setName("RANDOM State");
+	pNewStateGroup.setName("NEW State");
+	
+	pRandomTimeImage.addListener(this, &Layer::randomTimeImageChanged);
+	pRandomStateGroup.add(pRandomTimeImage.set("Image Time", glm::vec2(5, 10)));
+	
+	pRandomTimeColor.addListener(this, &Layer::randomTimeColorChanged);
+	pRandomStateGroup.add(pRandomTimeColor.set("Color Time", glm::vec2(1, 3)));
+	
+	pRandomTimeText.addListener(this, &Layer::randomTimeTextChanged);
+	pRandomStateGroup.add(pRandomTimeText.set("Text Time", glm::vec2(5, 10)));
+	
+	pRandomTimeBlack.addListener(this, &Layer::randomTimeBlackChanged);
+	pRandomStateGroup.add(pRandomTimeBlack.set("Black Time", glm::vec2(1, 1)));
+	
+	pParameters.add(pRandomStateGroup);
+	
+	pNewTimeImage.addListener(this, &Layer::newTimeImageChanged);
+	pNewStateGroup.add(pNewTimeImage.set("Image Time", 5));
+	
+	pNewTimeColor.addListener(this, &Layer::newTimeColorChanged);
+	pNewStateGroup.add(pNewTimeColor.set("Color Time", 3));
+	
+	pNewTimeText.addListener(this, &Layer::newTimeTextChanged);
+	pNewStateGroup.add(pNewTimeText.set("Text Time", 5));
+	
+	pNewTimeBlack.addListener(this, &Layer::newTimeBlackChanged);
+	pNewStateGroup.add(pNewTimeBlack.set("Black Time", 3));
+	
+	pParameters.add(pNewStateGroup);
+}
+
+void Layer::randomTimeImageChanged(glm::vec2 & time) {
 	for (auto& cell : mCells) {
-		cell->mTimeImage = time;
+		cell->mRandomTimeImageRange = time;
 	}
 }
 
-void Layer::timeColorChanged(float & time) {
+void Layer::randomTimeColorChanged(glm::vec2 & time) {
 	for (auto& cell : mCells) {
-		cell->mTimeColor = time;
+		cell->mRandomTimeColorRange = time;
 	}
 }
 
-void Layer::timeTextChanged(float & time) {
+void Layer::randomTimeTextChanged(glm::vec2 & time) {
 	for (auto& cell : mCells) {
-		cell->mTimeText = time;
+		cell->mRandomTimeTextRange = time;
 	}
 }
 
-void Layer::timeBlackChanged(float & time) {
+void Layer::randomTimeBlackChanged(glm::vec2 & time) {
 	for (auto& cell : mCells) {
-		cell->mTimeBlack = time;
+		cell->mRandomTimeBlackRange = time;
+	}
+}
+
+void Layer::newTimeImageChanged(float & time) {
+	for (auto& cell : mCells) {
+		cell->mNewTimeImage = time;
+	}
+}
+
+void Layer::newTimeColorChanged(float & time) {
+	for (auto& cell : mCells) {
+		cell->mNewTimeColor = time;
+	}
+}
+
+void Layer::newTimeTextChanged(float & time) {
+	for (auto& cell : mCells) {
+		cell->mNewTimeText = time;
+	}
+}
+
+void Layer::newTimeBlackChanged(float & time) {
+	for (auto& cell : mCells) {
+		cell->mNewTimeBlack = time;
 	}
 }

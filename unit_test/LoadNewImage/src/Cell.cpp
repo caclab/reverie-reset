@@ -29,8 +29,11 @@ void Cell::setup(int id, std::shared_ptr<ofxCenteredTrueTypeFont> font,
 				 float newTimeImage, float newTimeColor,
 				 float newTimeText, float newTimeBlack) {
 	mId = id;
+	mFont = font;
 	mPos = pos;
 	mSize = size;
+	mScaleText = size.y / ORIGINAL_HEIGHT;
+	
 	mRandomBundleBuffer = randomBuffer;
 	mNewBundleBuffer = newBuffer;
 	
@@ -44,25 +47,7 @@ void Cell::setup(int id, std::shared_ptr<ofxCenteredTrueTypeFont> font,
 	mNewTimeText = newTimeText;
 	mNewTimeBlack = newTimeBlack;
 	
-	mTimeImage = ofRandom(mRandomTimeImageRange.x, mRandomTimeImageRange.y);
-	mTimeColor = ofRandom(mRandomTimeColorRange.x, mRandomTimeColorRange.y);
-	mTimeText = ofRandom(mRandomTimeTextRange.x, mRandomTimeTextRange.y);
-	mTimeBlack = ofRandom(mRandomTimeBlackRange.x, mRandomTimeBlackRange.y);
-	
-	mFont = font;
-	mScaleText = size.y / ORIGINAL_HEIGHT;
-	
 	mBackToRandom = false;
-	
-//	// start with random state, init property
-//	mImageInfoBundle = mRandomBundleBuffer->getNext();
-//	
-//	mIsNew = false;
-//	
-//	mTimeStart = ofGetElapsedTimef();
-//	mState = BLACK;
-//	mOneCycleFinished = false;
-//	mGoFlip = false;
 }
 
 void Cell::random() {

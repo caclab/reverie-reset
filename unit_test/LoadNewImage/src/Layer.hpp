@@ -51,16 +51,30 @@ public:
 	ofEvent<void> mStandbyEvent;
 	
 	// deserialize
+	void initConfig();
 	ofParameterGroup pParameters;
-	ofParameter<float> pTimeImage;
-	ofParameter<float> pTimeColor;
-	ofParameter<float> pTimeText;
-	ofParameter<float> pTimeBlack;
+	ofParameterGroup pRandomStateGroup;
+	ofParameterGroup pNewStateGroup;
 	
-	void timeImageChanged(float & time);
-	void timeColorChanged(float & time);
-	void timeTextChanged(float & time);
-	void timeBlackChanged(float & time);
+	ofParameter<glm::vec2> pRandomTimeImage;
+	ofParameter<glm::vec2> pRandomTimeColor;
+	ofParameter<glm::vec2> pRandomTimeText;
+	ofParameter<glm::vec2> pRandomTimeBlack;
+	
+	ofParameter<float> pNewTimeImage;
+	ofParameter<float> pNewTimeColor;
+	ofParameter<float> pNewTimeText;
+	ofParameter<float> pNewTimeBlack;
+	
+	void randomTimeImageChanged(glm::vec2 & time);
+	void randomTimeColorChanged(glm::vec2 & time);
+	void randomTimeTextChanged(glm::vec2 & time);
+	void randomTimeBlackChanged(glm::vec2 & time);
+
+	void newTimeImageChanged(float & time);
+	void newTimeColorChanged(float & time);
+	void newTimeTextChanged(float & time);
+	void newTimeBlackChanged(float & time);
 };
 
 #endif /* Layer_hpp */

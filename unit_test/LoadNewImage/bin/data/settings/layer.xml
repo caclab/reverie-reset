@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<Layer>
+	<RANDOM_State>
+		<Image_Time>5, 10</Image_Time>
+		<Color_Time>1, 3</Color_Time>
+		<Text_Time>5, 10</Text_Time>
+		<Black_Time>1, 1</Black_Time>
+	</RANDOM_State>
+	<NEW_State>
+		<Image_Time>5</Image_Time>
+		<Color_Time>3</Color_Time>
+		<Text_Time>5</Text_Time>
+		<Black_Time>3</Black_Time>
+	</NEW_State>
+</Layer>
