@@ -128,7 +128,7 @@ void ofApp::onConnect( ofxLibwebsockets::Event& args ){
 void ofApp::onOpen( ofxLibwebsockets::Event& args ){
 	cout<<"on open"<<endl;
 	sendMessage("ready");
-	std::cout << "sending ready" << std::endl;
+	ofLogNotice("Client") << "sending ready";
 }
 
 //--------------------------------------------------------------
@@ -144,7 +144,7 @@ void ofApp::onIdle( ofxLibwebsockets::Event& args ){
 //--------------------------------------------------------------
 void ofApp::onMessage( ofxLibwebsockets::Event& args ){
 	if (args.message == "BOOM") {
-		std::cout << "\nBOOM\n" << std::endl;
+		ofLogNotice("Client") << "BOOM\n";
 		mLayer->boom();
 	} else {
 		auto visJson = ofJson::parse(args.message);
@@ -155,19 +155,19 @@ void ofApp::onMessage( ofxLibwebsockets::Event& args ){
 			ImageMetaBundle metaBundle;
 			
 			for (auto& meta : cJson) {
-				std::cout << index++ << ": " << std::endl;
+				ofLogNotice("Client") << index++ << ": ";
 				auto metaJson = ofJson::parse(meta.dump());
 				
 				std::string text = metaJson.at("caption");
 				std::string id = metaJson.at("image_id");
 				
-				std::cout << "\tcaption:" << text << std::endl;
-				std::cout << "\timage_id:" << id << std::endl;
+				ofLogNotice("Client") << "\tcaption:" << text;
+				ofLogNotice("Client") << "\timage_id:" << id;
 				
 				std::string path = "http://" + pHost.get() + ":" +
 				ofToString(pHttpPort.get()) + "/imgs/captioned/" + id + ".jpg";
 				
-				std::cout << "\tpath:" << path << std::endl;
+				ofLogNotice("Client") << "\tpath:" << path;
 				
 				metaBundle.add(path, text, true);
 			}
@@ -192,15 +192,15 @@ void ofApp::onBroadcast( ofxLibwebsockets::Event& args ){
 
 // Layer event
 void ofApp::onReady() {
-	std::cout << "layer ready" << std::endl;
+	ofLogNotice("Client") << "layer ready";
 	sendMessage("ready");
-	std::cout << "sending ready" << std::endl;
+	ofLogNotice("Client") << "sending ready";
 }
 
 void ofApp::onStandby() {
-	std::cout << "layer standby" << std::endl;
+	ofLogNotice("Client") << "layer standby";
 	sendMessage("standby");
-	std::cout << "sending standby" << std::endl;
+	ofLogNotice("Client") << "sending standby";
 }
 
 // deserialize

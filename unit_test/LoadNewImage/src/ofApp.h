@@ -4,10 +4,10 @@
 #include "Layer.hpp"
 #include "ofxLibwebsockets.h"
 
-const float WINDOW_WIDTH = 90;
-const float WINDOW_HEIGHT = 50.625;
-//const float WINDOW_WIDTH = 1280;
-//const float WINDOW_HEIGHT = 720;
+//const float WINDOW_WIDTH = 90;
+//const float WINDOW_HEIGHT = 50.625;
+const float WINDOW_WIDTH = 1280;
+const float WINDOW_HEIGHT = 720;
 const int WINDOW_NUM = 16;
 
 class ofApp : public ofBaseApp{

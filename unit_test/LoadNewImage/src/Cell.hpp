@@ -27,7 +27,7 @@ public:
 			   float newTimeImage, float newTimeColor,
 			   float newTimeText, float newTimeBlack);
 	
-	
+	// back to RANDOM mode
 	void random();
 	
 	// cut to images from mNewBundleBuffer
@@ -40,8 +40,8 @@ public:
 	
 	// protected
 	
-	const float ORIGINAL_WIDTH = 1280.0f;
-	const float ORIGINAL_HEIGHT = 720.0f;
+	const float SCREEN_WIDTH = 1280.0f;
+	const float SCREEN_HEIGHT = 720.0f;
 	
 	// start to cycle rendering images from mRandomBundleBuffer
 	void backToRandom();
@@ -56,6 +56,8 @@ public:
 	void newStateInBlack(float timeCurrent);
 	
 	int mId;
+	
+	ofFbo mCanvas;
 	
 	// for current use
 	std::shared_ptr<class ImageInfoBundle> mImageInfoBundle;
@@ -73,6 +75,7 @@ public:
 
 	// for cycling
 	int mIndexStart, mIndexCurrent;
+	
 	// duration of each state
 	glm::vec2 mRandomTimeImageRange, mRandomTimeColorRange;
 	glm::vec2 mRandomTimeTextRange, mRandomTimeBlackRange;
@@ -80,7 +83,10 @@ public:
 	float mNewTimeText, mNewTimeBlack;
 	float mTimeImage, mTimeColor, mTimeText, mTimeBlack;
 	float mTimeStart;
+	
+	// IDLE, IMAGE, COLOR, TEXT, BLACK
 	State mState;
+	
 	bool mOneCycleFinished;
 	
 	// how to render image and averaged color
@@ -88,7 +94,6 @@ public:
 	// how to render text
 	std::string mWrappedText;
 	std::shared_ptr<class ofxCenteredTrueTypeFont> mFont;
-	float mScaleText;
 };
 
 #endif /* Cell_hpp */

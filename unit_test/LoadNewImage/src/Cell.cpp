@@ -32,7 +32,8 @@ void Cell::setup(int id, std::shared_ptr<ofxCenteredTrueTypeFont> font,
 	mFont = font;
 	mPos = pos;
 	mSize = size;
-	mScaleText = size.y / ORIGINAL_HEIGHT;
+	
+	mCanvas.allocate(SCREEN_WIDTH, SCREEN_HEIGHT);
 	
 	mRandomBundleBuffer = randomBuffer;
 	mNewBundleBuffer = newBuffer;
@@ -112,36 +113,49 @@ void Cell::update() {
 		default:
 			break;
 	}
-}
-
-void Cell::draw() {
+	
+	mCanvas.begin();
+	ofClear(0);
+	
 	switch (mState) {
 		case IMAGE:
+		{
 			ofSetColor(255);
-			mImageInfoBundle->mImageInfos[mIndexCurrent]->mImage.draw(mPos, mSize.x, mSize.y);
+			glm::vec2 pos = mImageInfoBundle->mImageInfos[mIndexCurrent]->mRenderPos;
+			glm::vec2 size = mImageInfoBundle->mImageInfos[mIndexCurrent]->mRenderSize;
+			mImageInfoBundle->mImageInfos[mIndexCurrent]->mImage.draw(pos, size.x, size.y);
+		}
 			break;
 		case COLOR:
+		{
 			ofSetColor(mImageInfoBundle->mImageInfos[mIndexCurrent]->mAvgColor);
-			ofDrawRectangle(mPos, mSize.x, mSize.y);
+			ofDrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+		}
 			break;
 		case TEXT:
+		{
 			ofSetColor(mImageInfoBundle->mImageInfos[mIndexCurrent]->mAvgColor);
-			ofDrawRectangle(mPos, mSize.x, mSize.y);
+			ofDrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 			ofSetColor(255);
-			ofPushMatrix();
-			ofTranslate(mPos);
-			ofScale(mScaleText);
-			mFont->drawStringCentered(mWrappedText, ORIGINAL_WIDTH * 0.5f,
-									  ORIGINAL_HEIGHT * 0.5f);
-			ofPopMatrix();
+			mFont->drawStringCentered(mWrappedText, SCREEN_WIDTH * 0.5f,
+									  SCREEN_HEIGHT * 0.5f);
+		}
 			break;
 		case BLACK:
+		{
 			ofSetColor(0);
-			ofDrawRectangle(mPos, mSize.x, mSize.y);
+			ofDrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+		}
 			break;
 		default:
 			break;
 	}
+	mCanvas.end();
+}
+
+void Cell::draw() {
+	ofSetColor(255);
+	mCanvas.draw(mPos, mSize.x, mSize.y);
 }
 
 bool Cell::isFinished() {
@@ -177,7 +191,7 @@ void Cell::wrapText() {
 	
 	std::vector<std::string> words = ofSplitString(mImageInfoBundle->mImageInfos[mIndexCurrent]->mText, " ", true, true);
 	
-	float maxWidth = ORIGINAL_WIDTH * 0.6f;
+	float maxWidth = SCREEN_WIDTH * 0.6f;
 	float width = 0;
 	
 	for (auto& word : words) {
@@ -260,10 +274,10 @@ void Cell::randomStateInBlack(float timeCurrent) {
 
 void Cell::newStateInBlack(float timeCurrent) {
 	// use this flag here to prevent send READY message
-	// at the beginning of switch to RANDOM state
+	// at the beginning of switch to RANDOM mode
 	if (!mBackToRandom) {
-		// tell Layer this one ready when entering BLACK mode
-		// instead of exiting BLACK mode in RANDOM state,
+		// tell Layer this one ready when entering BLACK state
+		// instead of exiting BLACK state in RANDOM mode,
 		// in order to switch naturally if next message from server
 		// is also a NEW image
 		mOneCycleFinished = true;

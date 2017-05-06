@@ -44,6 +44,9 @@ public:
 	ofColor mAvgColor;
 	std::shared_ptr<class ImageProcesser> mImageProcesser;
 	bool mIsLoaded;
+	// for image scale
+	glm::vec2 mRenderPos;
+	glm::vec2 mRenderSize;
 };
 
 class ImageInfoBundle {
@@ -57,6 +60,9 @@ public:
 	bool isLoading();
 
 	void update(ofEventArgs & arg);
+	
+	const float SCREEN_WIDTH = 1280.0f;
+	const float SCREEN_HEIGHT = 720.0f;
 	
 	std::vector<std::shared_ptr<ImageInfo>> mImageInfos;
 	ofxThreadedImageLoader mLoader;

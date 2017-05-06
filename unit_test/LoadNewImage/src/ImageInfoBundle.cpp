@@ -99,6 +99,30 @@ void ImageInfoBundle::update(ofEventArgs & arg) {
 		if (!imgInfo->mImageProcesser->isThreadRunning() && !imgInfo->mIsLoaded &&
 			imgInfo->mImage.isUsingTexture()) {
 			ofLogNotice("ImageInfoBundle") << "image downloaded";
+			
+			// calculate image render position and size
+			float width = imgInfo->mImage.getWidth();
+			float height = imgInfo->mImage.getHeight();
+			float aspectRatio = SCREEN_HEIGHT / SCREEN_WIDTH;
+			
+			imgInfo->mRenderPos = glm::vec2(0, 0);
+			imgInfo->mRenderSize = glm::vec2(SCREEN_WIDTH, SCREEN_HEIGHT);
+			
+			if (height / width < aspectRatio) {
+				float scale = SCREEN_HEIGHT / height;
+				
+				imgInfo->mRenderSize.x = width * scale;
+				imgInfo->mRenderPos.x = (imgInfo->mRenderSize.x - SCREEN_WIDTH) * -0.5f;
+			} else if (height / width > aspectRatio) {
+				float scale = SCREEN_WIDTH / width;
+				
+				imgInfo->mRenderSize.y = height * scale;
+				imgInfo->mRenderPos.y = (imgInfo->mRenderSize.y - SCREEN_HEIGHT) * -0.5f;
+			}
+			
+			ofLogNotice("imgInfo") << imgInfo->mRenderPos << " -- " << imgInfo->mRenderSize;
+			
+			// process to get average color
 			imgInfo->mImageProcesser->process(imgInfo);
 		}
 	}
