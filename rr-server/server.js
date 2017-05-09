@@ -111,8 +111,6 @@ function loadVisFile() {
 var status; //save data from status.json
 var pathAutoRest = __dirname + "/auto_reset.js";
 exec.exec("node " + pathAutoRest + " -t", function(error, stdout, stderr) {
-    //console.log('stdout: ' + stdout);
-    //console.log('stderr: ' + stderr);
     if (error !== null) {
         //console.log('exec error: ' + error);
     } else {
