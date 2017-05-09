@@ -4,9 +4,9 @@
     	"SPORT": 8001,
     	"clients": {
     		"192.168.1.151":false,
-    		"192.168.1.152":true,
-    		"192.168.1.30":false,
-    		"192.168.1.40":false,
+    		"192.168.1.152":false,
+    		"192.168.1.153":false,
+    		"192.168.1.154":true,
     		"192.168.1.50":false
     	},
     	"screensPerLayer": 16,
@@ -16,6 +16,7 @@
     	"captionedPath":"/public/imgs/captioned/",
     	"conversionPath": "/public/imgs/conversion/",
         "neuralNetServerAddress": "http://localhost:5000/caption/",
+        "totalAllowedImages":500,
     	"about":["||||||||||||||||||||||||||||||||||||||",
 			    "|||||||||REVERIE RESET SERVER|||||||||",
 			    "||||||||||||||||||||||||||||||||||||||",

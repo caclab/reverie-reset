@@ -1,10 +1,13 @@
 var fs = require("fs");
 var readline = require("readline");
 var exec = require('child_process').exec;
+var config = require('./config.json');
 
 var captionedPath = __dirname + "/public/imgs/captioned/";
 var uploadedPath = __dirname + "/public/imgs/uploaded/";
 var conversionPath = __dirname + "/public/imgs/conversion/";
+
+var totalAllowedImages = config.server_config.totalAllowedImages;
 
 var rl = readline.createInterface({
     input: process.stdin,
@@ -19,7 +22,13 @@ function input(prompt, callback) {
 }
 
 function resetJsonFile(jsonFile) {
-    fs.writeFile(jsonFile, "[]", function(err) {
+    var tmpJson = [];
+
+    for(var i=0; i<totalAllowedImages; i++){
+        tmpJson.push({ "image_id": (i+1), "caption": "" })
+    }
+
+    fs.writeFile(jsonFile, JSON.stringify(tmpJson), function(err) {
         if (err) {
             return console.error(err);
         }

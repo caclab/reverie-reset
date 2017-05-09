@@ -69,9 +69,9 @@ function main() {
     var arguments = process.argv[2];
     console.log(arguments);
     if (arguments == "-t") {
-        resetStatusFile();
-        console.log("STATUS FILE UPDATED!");
-        console.log("");
+        // resetStatusFile();
+        // console.log("STATUS FILE UPDATED!");
+        // console.log("");
         var image_index_upload = getAllReadyImages(uploadedPath, function(indx_upload) {
             var imgInx_upload = parseInt(indx_upload);
             if (imgInx_upload > 0) {

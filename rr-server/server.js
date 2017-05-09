@@ -25,6 +25,7 @@ var systemInterval = config.server_config.systemInterval;
 var clients = config.server_config.clients;
 var screensPerLayer = config.server_config.screensPerLayer;
 var neuralNetServerAddress = config.server_config.neuralNetServerAddress;
+var totalAllowedImages = config.server_config.totalAllowedImages;
 
 var stateSwitch = "r"; // r for random, n for new-image-upload
 var newImageCounter = 0; // keeps track of how many new images are uploaded
@@ -66,31 +67,41 @@ function loadVisFile() {
     fs.readFile(captionedPath + 'vis.json', 'utf-8', function(err, content) {
         if (err) { console.log(err); }
         visDataTMP = JSON.parse(content);
-
+        console.log(visDataTMP.length, "images in database");
+        /*
         //COMPARE TOTAL CAPTIONS WITH TOTAL IMAGES IN CAPTIONED FOLDER
         //IF THERE ARE LESS CAPTIONED ITEMS THEN DELETE THE EXCEDING IMAGES
-        console.log("TOTAL CAPTIONED IMAGES:", visDataTMP.length);
-        if (status - 1 > visDataTMP.length) {
-            console.log("\nDeleting extra images...");
-            var imgsToDelete = "";
-            for (var i = visDataTMP.length + 1; i < status; i++) {
-                console.log(i, ".jpg");
-                imgsToDelete += captionedPath + i.toString() + ".jpg ";
-                if (i == status - 1) {
-                    var deleteCommand = "sudo rm " + imgsToDelete;
-                    //console.log(deleteCommand);
-                    exec.exec(deleteCommand, function(error, stdout, stderr) {
-                        //console.log('stdout: ' + stdout);
-                        //console.log('stderr: ' + stderr);
-                        if (error !== null) {
-                            //console.log('exec error: ' + error);
-                        } else {
-                            console.log("\nExtra images deleted!");
+        var totalCaptioned = 0;
+        for (var caps = 0; caps < visDataTMP.length; caps++) {
+            if (visDataTMP[caps].caption !== "") {
+                totalCaptioned++;
+            }
+            if (caps == visDataTMP.length - 1) {
+                console.log("TOTAL CAPTIONED IMAGES:", totalCaptioned);
+                if (status - 1 > visDataTMP.length) {
+                    console.log("\nDeleting extra images...");
+                    var imgsToDelete = "";
+                    for (var i = visDataTMP.length + 1; i < status; i++) {
+                        console.log(i, ".jpg");
+                        imgsToDelete += captionedPath + i.toString() + ".jpg ";
+                        if (i == status - 1) {
+                            var deleteCommand = "sudo rm " + imgsToDelete;
+                            //console.log(deleteCommand);
+                            exec.exec(deleteCommand, function(error, stdout, stderr) {
+                                //console.log('stdout: ' + stdout);
+                                //console.log('stderr: ' + stderr);
+                                if (error !== null) {
+                                    //console.log('exec error: ' + error);
+                                } else {
+                                    console.log("\nExtra images deleted!");
+                                }
+                            });
                         }
-                    });
+                    }
                 }
             }
         }
+        */
     });
 }
 
@@ -112,7 +123,7 @@ exec.exec("node " + pathAutoRest + " -t", function(error, stdout, stderr) {
             var obj = JSON.parse(content);
             //console.log("IMAGE STATUS:", obj.image_status);
             status = obj.image_status + 1;
-            console.log("STATUS:", status - 1, "images in database");
+            console.log("STATUS:", status - 1);
             loadVisFile();
         });
     }
@@ -272,6 +283,14 @@ function runNeuralNet(iName, callback) {
         exec.exec("curl \'" + neuralNetServerAddress + sha256sum + "\'", function(error, stdout, stderr) {
             //console.log('stdout: ' + stdout);
             //console.log('stderr: ' + stderr);
+            if (status > totalAllowedImages) {
+                status = 1;
+                newImageCounter = 0;
+                newImageQue = 0;
+
+                console.log("UPDATED STATUS:", status);
+            }
+            console.log("CURRENT STATUS:", status);
             var capobj = {};
             if (error !== null) {
                 //console.log('exec error: ' + error);
@@ -301,7 +320,7 @@ function runNeuralNet(iName, callback) {
                             clearInterval(getDataInterval);
                             totalData = { "image_id": status, "caption": data }
                             status++;
-                            newImageCounter++;
+                            //newImageCounter++;
                             newImageQue++;
                             console.log("NEW IMAGE COUNTER:", newImageCounter);
                             console.log("NEW IMAGE WAITING-LIST:", newImageQue, "\n");
@@ -321,14 +340,17 @@ function runNeuralNet(iName, callback) {
     runAll();
 }
 
-/////////////////////////////////////
-//Random data to display on screens//
-/////////////////////////////////////
+//////////////////////////////
+//Data to display on screens//
+//////////////////////////////
 function prepareDataForClient(callback) {
-    if (newImageCounter == 1 || newImageQue > 0 && newImageCounter % 3 != 0) {
+    console.log("NewImageQue", newImageQue, "newImageCounter", newImageCounter);
+    if (newImageQue > 0 && newImageCounter < 3){
         stateSwitch = "n";
+        newImageCounter++;
     } else {
         stateSwitch = "r";
+        newImageCounter = 0;
     }
 
     console.log("ACTUAL SYSTEM'S STATE", stateSwitch, "\n");
@@ -346,7 +368,7 @@ function prepareDataForClient(callback) {
                 toSend[i + 1]['image_id'] = (toSend[i + 1]['image_id']).toString();
                 //console.log(toSend[i]);
             } else if (stateSwitch == "n" && i == 1) {
-                toSend[i] = income[totalImgs - newImageQue];
+                toSend[i] = income[(status-1)-newImageQue];
                 toSend[i]['image_id'] = (toSend[i]['image_id']).toString();
             }
 
@@ -357,39 +379,18 @@ function prepareDataForClient(callback) {
 
         if (c == numberOfClients - 1) {
             callback(toSendTotal);
-            wwws.send(JSON.stringify(toSendTotal));
+            //wwws.send(JSON.stringify(toSendTotal));
+            wss.clients.forEach(function each(client) {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify(toSendTotal));
+                }
+            });
+            console.log("NewImageQue", newImageQue, "newImageCounter", newImageCounter);
             if (stateSwitch == "n") {
                 newImageQue--;
             }
         }
     }
-    // if (stateSwitch == "r") {
-    //     for (var c = 0; c < numberOfClients; c++) {
-    //         var toSend = {};
-    //         for (var i = 0; i < screensPerLayer; i++) {
-    //             var rchoice = Math.floor(Math.random() * income.length);
-    //             toSend[i + 1] = income[rchoice];
-    //             toSend[i + 1]['image_id'] = (toSend[i + 1]['image_id']).toString();
-    //             //console.log(toSend[i]);
-    //             if (i == screensPerLayer - 1) {
-    //                 toSendTotal[c + 1] = toSend;
-    //             }
-
-    //         }
-
-    //         if (c == numberOfClients - 1) {
-    //             callback(toSendTotal);
-    //             wwws.send(JSON.stringify(toSendTotal));
-    //         }
-    //     }
-    // } else if (stateSwitch == "n") {
-    //     var totalImgs = income.length;
-    //     toSendTotal = income[totalImgs - newImageQue];
-    //     toSendTotal['image_id'] = (toSendTotal['image_id']).toString();
-    //     newImageQue--;
-    //     callback(toSendTotal);
-    //     wwws.send(JSON.stringify(toSendTotal));
-    // }
 }
 
 ////////////////////////////////
@@ -405,6 +406,22 @@ Array.prototype.compare = function(testArr) {
     return true;
 }
 
+/////////////////////////
+//Save Status.json file//
+/////////////////////////
+function saveStatusFile(indexToSave) {
+    var newData = {
+        "image_status": indexToSave
+    }
+    fs.writeFile(__dirname + "/status.json", JSON.stringify(newData), function(err) {
+        if (err) {
+
+            return console.error(err);
+        }
+        console.log("IMAGE STATUS:", indexToSave);
+    });
+}
+
 ////////////////////////////////////////////////////////////////
 //Function to recursivelly check for any changes in the system//
 ////////////////////////////////////////////////////////////////
@@ -412,6 +429,7 @@ function generalSystemInterval() {
     setInterval(function() {
         console.log("\nNEW INTERVAL CYCLE!");
         saveVisJson(visDataTMP);
+        saveStatusFile(status - 1);
     }, systemInterval);
 }
 generalSystemInterval();
@@ -443,6 +461,12 @@ watch.onChange(function(file, prev, curr, action) {
                             //console.log("IMG CONVERTED TO .jpg");
 
                             runNeuralNet("imgs/conversion/" + imgName + ".jpg", function(p) {
+                                for (var i = 0; i < visDataTMP.length; i++) {
+                                    if (visDataTMP[i].image_id == p.image_id) {
+                                        visDataTMP[i] = p;
+                                        // console.log(visDataTMP[i], p);
+                                    }
+                                }
                                 exec.exec("sudo mv " + conversionPath + imgName + ".jpg " + captionedPath + p.image_id + ".jpg", function(error, stdout, stderr) {
                                     //console.log('stdout: ' + stdout);
                                     //console.log('stderr: ' + stderr);
@@ -450,7 +474,7 @@ watch.onChange(function(file, prev, curr, action) {
                                         console.log('exec error: ' + error);
                                     } else {
                                         console.log(p.image_id, ".jpg SAVED");
-                                        visDataTMP.push(p);
+                                        //visDataTMP.push(p);
                                         //console.log(visDataTMP);
                                         exec.exec("rm -r " + file, function(error, stdout, stderr) {
                                             //console.log('stdout: ' + stdout);
@@ -479,7 +503,8 @@ function saveVisJson(vtd) {
         if (err) {
             return console.error(err);
         } else {
-            console.log("vis.json SAVED!\n");
+            console.log("vis.json SAVED!");
+            //console.log(toSave, "\n");
         }
     });
 }
@@ -509,6 +534,12 @@ var wwws;
 //Create websocket server//
 ///////////////////////////
 const wss = new WebSocket.Server({ port: SPORT });
+
+wss.broadcast = function(data) {
+    for (var i in this.clients)
+        this.clients[i].send(data);
+};
+
 wss.on('connection', function connection(ws) {
     wwws = ws;
     console.log('Client connected!');
@@ -543,7 +574,12 @@ wss.on('connection', function connection(ws) {
                 console.log("ALL CLIENTS STANDING BY");
                 //Check and validate all connected clients
                 sortAndCompare(function() {
-                    ws.send("BOOM");
+                    //ws.send("BOOM");
+                    wss.clients.forEach(function each(client) {
+                        if (client.readyState === WebSocket.OPEN) {
+                            client.send("BOOM");
+                        }
+                    });
                     client_standby = [];
                 });
             }
