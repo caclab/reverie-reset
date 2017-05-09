@@ -7,7 +7,7 @@ This README file describes the parts and uses of the system Reverie-reset develo
 
 ### Files Included in the server folder
 
-1. server.js: Server or main app of the system. Creates a rout for uploading images at localhost:8080. Users can upload images to the system through this url. This app runs all subprocesses for cleaning and managing files + captioning images through the artificial neural network in realtime.
+1. server.js: Server or main app of the system. Creates a route for uploading images at localhost:8080. Users can upload images to the system through this url. This app runs all subprocesses for cleaning and managing files + captioning images through the artificial neural network in realtime.
 
 2. config.json: The main configuration file for images' paths, commands, server and wesocket ports, log messages, etc.
 
@@ -25,7 +25,7 @@ This README file describes the parts and uses of the system Reverie-reset develo
 		/public/imgs/captioned
 		/public/imgs/conversion
 
-All uploaded images go to the uploaded file, the system copies them to the conversion folder and then removes them from the uploaded folder. Once there is a cycle check, the neuralnet will run and caption all images on the conversion folder and move them to the captioned folder. This last folder keeps all images which have been processed + a vis.json file.
+All uploaded images go to the uploaded folder, the system copies them to the conversion folder and then removes them from the uploaded folder.
 
 8. vis.json file: This last file will keep all the captioned data per image + each image's id.
 
@@ -62,9 +62,11 @@ The vis.json looks like this:
 
 ### Captioning
 
-The captioning happens by means of the docker app [jacopofar/neuraltalk2-web](https://github.com/jacopofar/neuraltalk2-web) with a pretrained model. Please follow the instructions on the previous link in order to install the docker app. The neuraltalk2-web app runs on a separate server and it needs to be initiated with the following command:
+The captioning happens by means of the docker app [jacopofar/neuraltalk2-web](https://github.com/jacopofar/neuraltalk2-web) with a pretrained model. Please follow the instructions on the previous link in order to install the docker app. The neuraltalk2-web app runs on a separate server and it needs to be initiated by the server with the following command:
 
 		sudo docker run --name neuraltalk2-web -p 5000:5000 -v /home/reverie-reset/captiondata:/mounted jacopofar/neuraltalk2-web:latest
+
+This command has been added as a child process to the main server.js script. At boot, the server checks for any docker container running and if it finds one it kills it. Finally it executes the jacopofar/neuraltalk2-web.
 
 ### COM Protocol
 
@@ -79,7 +81,7 @@ The communication is done via websockets. The basic structure is:
 Events Definition:
 
 SYSTEM INITIATED SERVER ONLINE + 
-CLIENTS CONNECT AND SEND:
+CLIENTS CONNECTED AND READY:
 
 	    c1$ready
 	    c2$ready
@@ -87,11 +89,10 @@ CLIENTS CONNECT AND SEND:
 	    c4$ready
 	    c5$ready
 
-IF THERE IS NO NEW IMAGE UPLOAD, THE SERVER SENDS OUT
-A JSON OBJECT WITH ALL RANDOM DATA:    
+RANDOM STATE -> IF THERE IS NO NEW IMAGE UPLOAD, THE SERVER SENDS OUT A JSON OBJECT WITH ALL RANDOM DATA:    
     
 	    {
-	        "c1": 
+	        "1": 
 	            {
 	                "1":{
 	                        "image_id":"259",
@@ -106,12 +107,75 @@ A JSON OBJECT WITH ALL RANDOM DATA:
 	                    .
 	                (12 objects in total, all random)
 	            },
-	        "c2":
+	        "2":
 	            {
 	                (same here)
 	            },
 	        .
 	        .
 	        .
-	        (All clients: c1, c2, c3, c4, c5)
+	        (All clients: 1, 2, 3, 4, 5)
 	    }
+
+NEW IMAGE STATE -> IF THERE IS A NEW IMAGE UPLOADED AND WAITING, THE SERVER SENDS OUT THE DATA FOR THE NEW IMAGE:
+
+		{
+	        "1": 
+	            {
+	                "1":{
+	                        "image_id":"259",
+	                        "caption":"a close up of a clock on a wall"
+	                    }
+	            },
+	        "2":
+	            {
+	                "1":{
+	                        "image_id":"259",
+	                        "caption":"a close up of a clock on a wall"
+	                    }
+	            },
+	        "3":
+	            {
+	                "1":{
+	                        "image_id":"259",
+	                        "caption":"a close up of a clock on a wall"
+	                    }
+	            },
+	        .
+	        .
+	        .
+	        (All clients: 1, 2, 3, 4, 5)
+	    }
+
+
+-------------------
+
+####Some Extra and Usefull Docker Commands
+
+- list containers:
+
+		sudo docker ps
+
+- Stop a running container:
+	
+		sudo docker rm -fv CONTAINERID
+
+- running the APP:
+
+		sudo docker run --name neuraltalk2-web -p 5000:5000 -v /home/reverie-reset/captiondata:/mounted jacopofar/neuraltalk2-web:latest
+
+- running the BASH
+
+		docker exec -it neuraltalk2-web bash
+
+- Getting the sha256sum:
+
+		curl -X POST -H "Content-Type: application/json" -d '{"url":"http://192.168.1.143:8080/1.jpg"}' 'http://localhost:5000/addURL'
+
+This returns a JSON like this:
+
+		{"extension":"jpg","sha256sum":"c79dd842f5343ec810b7a8a425195794a89e259b36bc7768323f5e50f888db7a"}
+
+- Getting the caption:
+
+		curl 'http://localhost:5000/caption/c79dd842f5343ec810b7a8a425195794a89e259b36bc7768323f5e50f888db7a'
