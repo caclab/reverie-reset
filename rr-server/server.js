@@ -111,6 +111,8 @@ function loadVisFile() {
 var status; //save data from status.json
 var pathAutoRest = __dirname + "/auto_reset.js";
 exec.exec("node " + pathAutoRest + " -t", function(error, stdout, stderr) {
+    //console.log('stdout: ' + stdout);
+    //console.log('stderr: ' + stderr);
     if (error !== null) {
         //console.log('exec error: ' + error);
     } else {
@@ -212,7 +214,7 @@ for (var key in clients) {
 ////////////////////////////////////////////
 //SETUP EXPRESS APP AND WATCH FOLDER EVENT//
 ////////////////////////////////////////////
-
+var path = require('path');
 app.use(fileUpload());
 watch.add(uploadPath);
 
@@ -234,7 +236,7 @@ app.post('/upload', function(req, res) {
         if (err) {
             res.status(500).send(err);
         } else {
-            res.send('File uploaded!');
+            res.sendFile(path.join(__dirname + '/public/redirect.html'));
         }
     });
 });
