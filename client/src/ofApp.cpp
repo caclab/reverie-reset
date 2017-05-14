@@ -20,6 +20,10 @@ void ofApp::setup(){
 	ofAddListener(mLayer->mStandbyEvent, this, &ofApp::onStandby);
 	
 	mLastReconnectTime = ofGetElapsedTimef();
+	
+#ifdef _WIN32
+	ShowCursor(false);
+#endif
 }
 
 //--------------------------------------------------------------
