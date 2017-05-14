@@ -1,26 +1,21 @@
 @echo off
 
-set _interval=5
+set _interval=10
 
-set _processName=AutoStart
+set _processExe=AutoStart.exe
 
 set _processCmd=.\bin\AutoStart.exe
 
-set _username=Administrator
-
 :LOOP
-set /a isAlive=false
 
-tasklist /FI "username eq %_username%" | find /C "%_processName%" > temp.txt
+tasklist | find /C "%_processExe%" > temp.txt
 set /p num= < temp.txt
 del /F temp.txt
 
-if "%num%" == "0" (
-start %_processCmd% | echo start %_processName% at %time%
-)
+if "%num%" == "0" (start %_processCmd% | echo start %_processExe% at %time%)
 
-if "%num%" NEQ "0" echo started
+if "%num%" NEQ "0" echo already launched
 
-ping -n %_interval% 127.1>nul
+ping -n %_interval% 127.0.0.1>nul
 
 goto LOOP
