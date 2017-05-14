@@ -18,11 +18,29 @@ void ofApp::setup(){
 
 	ofAddListener(mLayer->mReadyEvent, this, &ofApp::onReady);
 	ofAddListener(mLayer->mStandbyEvent, this, &ofApp::onStandby);
+	
+	mLastReconnectTime = ofGetElapsedTimef();
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
 	mLayer->update();
+	
+	if (ofGetElapsedTimef() - mLastReconnectTime >= 5) {
+		if (!mClient.isConnected()) {
+			ofSetLogLevel(OF_LOG_VERBOSE);
+			ofxLibwebsockets::ClientOptions options = ofxLibwebsockets::defaultClientOptions();
+			options.host = pHost;
+			options.port = pSocketPort;
+			
+			mClient.close();
+			mClient.connect(options);
+			ofSetLogLevel(OF_LOG_NOTICE);
+			ofLogNotice("Client") << "Server unreachable, Reconnecting..";
+		}
+		
+		mLastReconnectTime = ofGetElapsedTimef();
+	}
 }
 
 //--------------------------------------------------------------
