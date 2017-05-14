@@ -38,7 +38,7 @@ void Layer::setup(int cellNum, glm::vec2 size) {
 		std::shared_ptr<Cell> cell = std::make_shared<Cell>();
 		cell->setup(i, mFont, glm::vec2(0), size, mRandomBundleBuffer, mNewBundleBuffer,
 					glm::vec2(5, 10), glm::vec2(1, 3), glm::vec2(5, 10), glm::vec2(1, 1),
-					1, 1, 1, 1);
+					1, 1, 1, 1, true, 1);
 		
 		mRandomBundleBuffer->addUser(cell);
 		mNewBundleBuffer->addUser(cell);
@@ -146,6 +146,7 @@ void Layer::initConfig() {
 	pParameters.setName("Layer");
 	pRandomStateGroup.setName("RANDOM State");
 	pNewStateGroup.setName("NEW State");
+	pCycleGroup.setName("Cycle");
 	
 	pRandomTimeImage.addListener(this, &Layer::randomTimeImageChanged);
 	pRandomStateGroup.add(pRandomTimeImage.set("Image Time", glm::vec2(5, 10)));
@@ -174,6 +175,14 @@ void Layer::initConfig() {
 	pNewStateGroup.add(pNewTimeBlack.set("Black Time", 3));
 	
 	pParameters.add(pNewStateGroup);
+	
+	pUseCycle.addListener(this, &Layer::useCycleChanged);
+	pCycleGroup.add(pUseCycle.set("Use Cycle", true));
+	
+	pCycleNum.addListener(this, &Layer::cycleNumChanged);
+	pCycleGroup.add(pCycleNum.set("Cycle Num", 1));
+	
+	pParameters.add(pCycleGroup);
 }
 
 void Layer::randomTimeImageChanged(glm::vec2 & time) {
@@ -221,5 +230,17 @@ void Layer::newTimeTextChanged(float & time) {
 void Layer::newTimeBlackChanged(float & time) {
 	for (auto& cell : mCells) {
 		cell->mNewTimeBlack = time;
+	}
+}
+
+void Layer::useCycleChanged(bool & cycle) {
+	for (auto& cell : mCells) {
+		cell->mUseCycle = cycle;
+	}
+}
+
+void Layer::cycleNumChanged(int & num) {
+	for (auto& cell : mCells) {
+		cell->setCycleNum(num);
 	}
 }

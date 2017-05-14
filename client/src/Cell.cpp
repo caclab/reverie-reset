@@ -27,7 +27,8 @@ void Cell::setup(int id, std::shared_ptr<ofxCenteredTrueTypeFont> font,
 				 glm::vec2 randomTimeImage, glm::vec2 randomTimeColor,
 				 glm::vec2 randomTimeText, glm::vec2 randomTimeBlack,
 				 float newTimeImage, float newTimeColor,
-				 float newTimeText, float newTimeBlack) {
+				 float newTimeText, float newTimeBlack,
+				 bool useCycle, int cycleNum) {
 	mId = id;
 	mFont = font;
 	mPos = pos;
@@ -49,6 +50,9 @@ void Cell::setup(int id, std::shared_ptr<ofxCenteredTrueTypeFont> font,
 	mNewTimeBlack = newTimeBlack;
 	
 	mBackToRandom = false;
+	
+	mUseCycle = useCycle;
+	setCycleNum(cycleNum);
 }
 
 void Cell::random() {
@@ -123,7 +127,16 @@ void Cell::update() {
 			ofSetColor(255);
 			glm::vec2 pos = mImageInfoBundle->mImageInfos[mIndexCurrent]->mRenderPos;
 			glm::vec2 size = mImageInfoBundle->mImageInfos[mIndexCurrent]->mRenderSize;
-			mImageInfoBundle->mImageInfos[mIndexCurrent]->mImage.draw(pos, size.x, size.y);
+			
+			int currentIndex;
+			
+			if (mUseCycle) {
+				currentIndex = mIndexCurrent;
+			} else {
+				currentIndex = mIndexStart;
+			}
+			
+			mImageInfoBundle->mImageInfos[currentIndex]->mImage.draw(pos, size.x, size.y);
 		}
 			break;
 		case COLOR:
@@ -160,6 +173,10 @@ void Cell::draw() {
 
 bool Cell::isFinished() {
 	return mOneCycleFinished;
+}
+
+void Cell::setCycleNum(int num) {
+	mCycleNum = std::max(0, num - 1);
 }
 
 void Cell::backToRandom() {
@@ -235,7 +252,7 @@ void Cell::cycle(float timeCurrent) {
 		} else {
 			currentIndex = mIndexCurrent;
 		}
-		if (!mOneCycleFinished && currentIndex - mIndexStart > 0) {
+		if (!mOneCycleFinished && currentIndex - mIndexStart >= mCycleNum) {
 			// one cycle finished
 			mOneCycleFinished = true;
 		}

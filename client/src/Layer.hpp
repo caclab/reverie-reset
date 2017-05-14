@@ -55,6 +55,7 @@ public:
 	ofParameterGroup pParameters;
 	ofParameterGroup pRandomStateGroup;
 	ofParameterGroup pNewStateGroup;
+	ofParameterGroup pCycleGroup;
 	
 	ofParameter<glm::vec2> pRandomTimeImage;
 	ofParameter<glm::vec2> pRandomTimeColor;
@@ -66,6 +67,9 @@ public:
 	ofParameter<float> pNewTimeText;
 	ofParameter<float> pNewTimeBlack;
 	
+	ofParameter<bool> pUseCycle;
+	ofParameter<int> pCycleNum;
+	
 	void randomTimeImageChanged(glm::vec2 & time);
 	void randomTimeColorChanged(glm::vec2 & time);
 	void randomTimeTextChanged(glm::vec2 & time);
@@ -75,6 +79,9 @@ public:
 	void newTimeColorChanged(float & time);
 	void newTimeTextChanged(float & time);
 	void newTimeBlackChanged(float & time);
+	
+	void useCycleChanged(bool & cycle);
+	void cycleNumChanged(int & num);
 };
 
 #endif /* Layer_hpp */

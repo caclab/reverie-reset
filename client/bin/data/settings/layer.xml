@@ -12,4 +12,8 @@
 		<Text_Time>5</Text_Time>
 		<Black_Time>3</Black_Time>
 	</NEW_State>
+	<Cycle>
+		<Use_Cycle>0</Use_Cycle>
+		<Cycle_Num>1</Cycle_Num>
+	</Cycle>
 </Layer>

@@ -25,7 +25,8 @@ public:
 			   glm::vec2 randomTimeImage, glm::vec2 randomTimeColor,
 			   glm::vec2 randomTimeText, glm::vec2 randomTimeBlack,
 			   float newTimeImage, float newTimeColor,
-			   float newTimeText, float newTimeBlack);
+			   float newTimeText, float newTimeBlack,
+			   bool useCycle, int cycleNum);
 	
 	// back to RANDOM mode
 	void random();
@@ -37,6 +38,8 @@ public:
 	void draw();
 	// cycle finished
 	bool isFinished();
+	
+	void setCycleNum(int num);
 	
 	// protected
 	
@@ -88,6 +91,10 @@ public:
 	State mState;
 	
 	bool mOneCycleFinished;
+	// cycle with different images
+	bool mUseCycle;
+	// how many cycles should be run before sending ready
+	int mCycleNum;
 	
 	// how to render image and averaged color
 	glm::vec2 mPos, mSize;
