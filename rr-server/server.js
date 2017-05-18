@@ -30,6 +30,8 @@ var totalAllowedImages = config.server_config.totalAllowedImages;
 var stateSwitch = "r"; // r for random, n for new-image-upload
 var newImageCounter = 0; // keeps track of how many new images are uploaded
 var newImageQue = 0;
+var uploadsCounter = 0;
+var randomCycleCounter = 0;
 
 ////////////////
 //GET LOCAL IP//
@@ -68,40 +70,6 @@ function loadVisFile() {
         if (err) { console.log(err); }
         visDataTMP = JSON.parse(content);
         console.log(visDataTMP.length, "images in database");
-        /*
-        //COMPARE TOTAL CAPTIONS WITH TOTAL IMAGES IN CAPTIONED FOLDER
-        //IF THERE ARE LESS CAPTIONED ITEMS THEN DELETE THE EXCEDING IMAGES
-        var totalCaptioned = 0;
-        for (var caps = 0; caps < visDataTMP.length; caps++) {
-            if (visDataTMP[caps].caption !== "") {
-                totalCaptioned++;
-            }
-            if (caps == visDataTMP.length - 1) {
-                console.log("TOTAL CAPTIONED IMAGES:", totalCaptioned);
-                if (status - 1 > visDataTMP.length) {
-                    console.log("\nDeleting extra images...");
-                    var imgsToDelete = "";
-                    for (var i = visDataTMP.length + 1; i < status; i++) {
-                        console.log(i, ".jpg");
-                        imgsToDelete += captionedPath + i.toString() + ".jpg ";
-                        if (i == status - 1) {
-                            var deleteCommand = "sudo rm " + imgsToDelete;
-                            //console.log(deleteCommand);
-                            exec.exec(deleteCommand, function(error, stdout, stderr) {
-                                //console.log('stdout: ' + stdout);
-                                //console.log('stderr: ' + stderr);
-                                if (error !== null) {
-                                    //console.log('exec error: ' + error);
-                                } else {
-                                    console.log("\nExtra images deleted!");
-                                }
-                            });
-                        }
-                    }
-                }
-            }
-        }
-        */
     });
 }
 
@@ -134,25 +102,25 @@ exec.exec("node " + pathAutoRest + " -t", function(error, stdout, stderr) {
 ////////////////////////////////////////////////
 var exec = require('child_process');
 exec.exec('sudo docker run --name neuraltalk2-web -p 5000:5000 -v /home/reverie-reset/captiondata:/mounted jacopofar/neuraltalk2-web:latest', function(error, stdout, stderr) {
-    console.log('stdout: ' + stdout);
-    console.log('stderr: ' + stderr);
+    //console.log('stdout: ' + stdout);
+    //console.log('stderr: ' + stderr);
     if (error !== null) {
-        console.log('exec error: ' + error);
+        //console.log('exec error: ' + error);
         exec.exec('sudo docker ps -aqf "name=neuraltalk2-web"', function(error, stdout, stderr) {
-            console.log(stdout);
+            //console.log('stdout: ' + stdout);
             //console.log('stderr: ' + stderr);
             if (error !== null) {
                 console.log('exec error: ' + error);
             } else {
                 exec.exec('sudo docker rm -fv ' + stdout, function(error, stdout, stderr) {
-                    console.log('stdout: ' + stdout);
-                    console.log('stderr: ' + stderr);
+                    //console.log('stdout: ' + stdout);
+                    //console.log('stderr: ' + stderr);
                     if (error !== null) {
                         console.log('exec error: ' + error);
                     } else {
                         exec.exec('sudo docker run --name neuraltalk2-web -p 5000:5000 -v /home/reverie-reset/captiondata:/mounted jacopofar/neuraltalk2-web:latest', function(error, stdout, stderr) {
-                            console.log('stdout: ' + stdout);
-                            console.log('stderr: ' + stderr);
+                            //console.log('stdout: ' + stdout);
+                            //console.log('stderr: ' + stderr);
                             if (error !== null) {
                                 console.log('exec error: ' + error);
                             } else {
@@ -241,6 +209,11 @@ app.post('/upload', function(req, res) {
     });
 });
 
+// Route to MONITOR
+app.get('/monitor', function(req, res) {
+    res.sendFile(path.join(__dirname + '/public/monitor.html'));
+});
+
 //////////////////////////////////////////////////////////
 //FUNCTION CHECKS AND LIST ALL FILES IN ANY GIVEN FOLDER//
 //////////////////////////////////////////////////////////
@@ -320,7 +293,7 @@ function runNeuralNet(iName, callback) {
                             clearInterval(getDataInterval);
                             totalData = { "image_id": status, "caption": data }
                             status++;
-                            //newImageCounter++;
+                            uploadsCounter++;
                             newImageQue++;
                             console.log("NEW IMAGE COUNTER:", newImageCounter);
                             console.log("NEW IMAGE WAITING-LIST:", newImageQue, "\n");
@@ -345,12 +318,13 @@ function runNeuralNet(iName, callback) {
 //////////////////////////////
 function prepareDataForClient(callback) {
     console.log("NewImageQue", newImageQue, "newImageCounter", newImageCounter);
-    if (newImageQue > 0 && newImageCounter < 3){
+    if (newImageQue > 0 && newImageCounter < 3) {
         stateSwitch = "n";
         newImageCounter++;
     } else {
         stateSwitch = "r";
         newImageCounter = 0;
+        randomCycleCounter++;
     }
 
     console.log("ACTUAL SYSTEM'S STATE", stateSwitch, "\n");
@@ -368,7 +342,7 @@ function prepareDataForClient(callback) {
                 toSend[i + 1]['image_id'] = (toSend[i + 1]['image_id']).toString();
                 //console.log(toSend[i]);
             } else if (stateSwitch == "n" && i == 1) {
-                toSend[i] = income[(status-1)-newImageQue];
+                toSend[i] = income[(status - 1) - newImageQue];
                 toSend[i]['image_id'] = (toSend[i]['image_id']).toString();
             }
 
@@ -520,7 +494,8 @@ function sortAndCompare(callback) {
         console.log("\nERROR with connected clients");
         console.log("No data was sent!");
         console.log("Make sure all clients are connected!");
-        console.log("Current connected clients:", client_status);
+        console.log("Current READY clients:", client_status);
+        console.log("Connected clients:", client_ips);
         console.log("Expected connected clients:", toCompare, "\n");
     }
 }
@@ -529,6 +504,7 @@ function sortAndCompare(callback) {
 var client_status = [];
 var client_standby = [];
 var client_ips = [];
+var monitor_ip;
 var wwws;
 ///////////////////////////
 //Create websocket server//
@@ -541,20 +517,34 @@ wss.broadcast = function(data) {
 };
 
 wss.on('connection', function connection(ws) {
+
     wwws = ws;
     console.log('Client connected!');
     var tmpIp = ws._socket.remoteAddress;
     tmpIp = tmpIp.split("::");
     tmpIp = tmpIp[1].split(":");
-    console.log(tmpIp[1]);
-    client_ips.push(tmpIp[1]);
+    //console.log(tmpIp[1]);
+
+    if (include(toCompare, tmpIp[1])) {
+        //console.log(tmpIp[1], "Almost Connected!!");
+        if (include(client_ips, tmpIp[1]) === false) {
+            client_ips.push(tmpIp[1]);
+            //console.log(tmpIp[1], "Connected!!");
+        }
+    }
+
     console.log("CURRENT CONNECTED CLIENTS:", client_ips);
 
     ws.on('message', function incoming(message) {
         console.log('received: %s', message);
         var tmp = message.split('$');
         if (tmp[1] == 'ready') {
-            client_status.push(tmp[0]);
+            if (include(client_status, tmp[0]) == false) {
+                client_status.push(tmp[0]);
+                console.log("Current READY clients:", client_status);
+            } else {
+                console.log("client already added to status list", client_status);
+            }
 
             if (client_status.length === toCompare.length) {
                 console.log("ALL CLIENTS READY");
@@ -588,6 +578,8 @@ wss.on('connection', function connection(ws) {
     ws.on('close', function close(data) {
         console.log('disconnected');
         var tmp_client_ips = [];
+        // var isMonitorConnected = false;
+        var counter = 0;
         wss.clients.forEach(function each(client) {
             if (client.readyState === WebSocket.OPEN) {
                 console.log(client._socket.remoteAddress);
@@ -597,10 +589,37 @@ wss.on('connection', function connection(ws) {
                 tmp_client_ips.push(tmpIp[1]);
             }
         });
+
+        if (isEmpty(wss.clients)) {
+            console.log("NO CLIENTS CONNECTED!!");
+        }
+
         client_ips = tmp_client_ips;
-        console.log("CURRENT CONNECTED CLIENTS:", client_ips);
     });
 });
+
+var intervalID = null;
+
+function intervalManager(flag, animate, time) {
+    if (flag) {
+        intervalID = setInterval(animate, time);
+    } else {
+        clearInterval(intervalID);
+    }
+}
+
+function isEmpty(obj) {
+    for (var prop in obj) {
+        if (obj.hasOwnProperty(prop)) {
+            return false;
+        }
+    }
+    return JSON.stringify(obj) === JSON.stringify({});
+}
+
+function include(arr, obj) {
+    return (arr.indexOf(obj) != -1);
+}
 
 //////////////////////////////
 //Start MAIN app http Server//
