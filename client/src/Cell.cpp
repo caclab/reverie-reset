@@ -55,6 +55,12 @@ void Cell::setup(int id, std::shared_ptr<ofxCenteredTrueTypeFont> font,
 	setCycleNum(cycleNum);
 }
 
+void Cell::reset() {
+	mState = IDLE;
+	mBackToRandom = false;
+	mImageInfoBundle = nullptr;
+}
+
 void Cell::random() {
 	mBackToRandom = true;
 }

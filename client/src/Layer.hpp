@@ -17,6 +17,8 @@ public:
 	~Layer();
 	
 	void setup(int cellNum, glm::vec2 size);
+	
+	void reset();
 
 	void update();
 	void draw();

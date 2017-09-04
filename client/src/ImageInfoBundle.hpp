@@ -53,6 +53,8 @@ class ImageInfoBundle {
 public:
 	ImageInfoBundle();
 	~ImageInfoBundle();
+	
+	void reset();
 
 	void load(const ImageMetaBundle& metaBundle);
 	void load(const std::vector<ImageMeta>& metas);

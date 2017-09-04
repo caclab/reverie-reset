@@ -43,6 +43,11 @@ ImageInfoBundle::~ImageInfoBundle() {
 	ofRemoveListener(ofEvents().update, this, &ImageInfoBundle::update);
 }
 
+void ImageInfoBundle::reset() {
+	mEventSent = false;
+	mLoading = false;
+}
+
 void ImageInfoBundle::load(const ImageMetaBundle& metaBundle) {
 	load(metaBundle.mImageMetas);
 }

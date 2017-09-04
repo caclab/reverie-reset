@@ -27,6 +27,14 @@ BundleBuffer::~BundleBuffer() {
 	ofRemoveListener(mPong->mLoadedEvent, this, &BundleBuffer::onLoaded);
 }
 
+void BundleBuffer::reset() {
+	mPing->reset();
+	mPong->reset();
+	mCurrent = mPing;
+	mFlippable = false;
+	mLoading = false;
+}
+
 void BundleBuffer::addUser(std::shared_ptr<Cell> user) {
 	mUsers.push_back(user);
 }

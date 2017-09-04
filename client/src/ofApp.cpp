@@ -146,6 +146,7 @@ void ofApp::onConnect( ofxLibwebsockets::Event& args ){
 void ofApp::onOpen( ofxLibwebsockets::Event& args ){
 	cout<<"on open"<<endl;
 	sendMessage("ready");
+	mLayer->reset();
 	ofLogNotice("Client") << "sending ready";
 }
 

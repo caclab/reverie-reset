@@ -16,6 +16,8 @@ public:
 	BundleBuffer();
 	~BundleBuffer();
 	
+	void reset();
+	
 	void addUser(std::shared_ptr<class Cell> user);
 	void update();
 	void load(const ImageMetaBundle& metaBundle);

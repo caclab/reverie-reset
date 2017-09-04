@@ -28,6 +28,8 @@ public:
 			   float newTimeText, float newTimeBlack,
 			   bool useCycle, int cycleNum);
 	
+	void reset();
+	
 	// back to RANDOM mode
 	void random();
 	
