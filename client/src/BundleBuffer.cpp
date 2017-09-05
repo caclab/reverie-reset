@@ -28,10 +28,10 @@ BundleBuffer::~BundleBuffer() {
 }
 
 void BundleBuffer::reset() {
-	mPing->reset();
-	mPong->reset();
-	mCurrent = mPing;
-	mFlippable = false;
+	if (isAllUserFlipped()) {
+		getCurrent()->reset();
+	}
+	
 	mLoading = false;
 }
 

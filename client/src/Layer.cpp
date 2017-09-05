@@ -53,10 +53,6 @@ void Layer::setup(int cellNum, glm::vec2 size) {
 }
 
 void Layer::reset() {
-	for (auto& cell : mCells) {
-		cell->reset();
-	}
-	
 	mRandomBundleBuffer->reset();
 	mNewBundleBuffer->reset();
 }
