@@ -21,9 +21,9 @@ public:
 
 	void threadedFunction();
 	
-	void averageColor();
+	void averageColor(std::shared_ptr<class ImageInfo> imageInfo);
 
-	std::shared_ptr<class ImageInfo> mImageInfo;
+	std::weak_ptr<class ImageInfo> mImageInfo;
 };
 
 
