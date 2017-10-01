@@ -24,23 +24,27 @@ void ImageProcesser::process(std::shared_ptr<ImageInfo> imageInfo) {
 
 void ImageProcesser::threadedFunction() {
 	ofLogNotice("ImageProcesser") << "processing...";
-	averageColor();
-	ofLogNotice("ImageProcesser") << "done: " << mImageInfo->mText;
+	if (auto imageInfo = mImageInfo.lock()) {
+		averageColor(imageInfo);
+		ofLogNotice("ImageProcesser") << "done: " << imageInfo->mText;
+	} else {
+		ofLogNotice("ImageProcesser") << "ImageInfo not available";
+	}
 }
 
-void ImageProcesser::averageColor() {
-	if (mImageInfo) {
+void ImageProcesser::averageColor(std::shared_ptr<class ImageInfo> imageInfo) {
+	if (imageInfo) {
 		int red = 0;
 		int green = 0;
 		int blue = 0;
 		
-		int size = mImageInfo->mImage.getWidth() * mImageInfo->mImage.getHeight();
+		int size = imageInfo->mImage.getWidth() * imageInfo->mImage.getHeight();
 		if (size > 0) {
-			for (int col = 0; col < mImageInfo->mImage.getWidth(); col++) {
-				for (int row = 0; row < mImageInfo->mImage.getHeight(); row++) {
-					red += (int)mImageInfo->mImage.getColor(col, row).r;
-					green += (int)mImageInfo->mImage.getColor(col, row).g;
-					blue += (int)mImageInfo->mImage.getColor(col, row).b;
+			for (int col = 0; col < imageInfo->mImage.getWidth(); col++) {
+				for (int row = 0; row < imageInfo->mImage.getHeight(); row++) {
+					red += (int)imageInfo->mImage.getColor(col, row).r;
+					green += (int)imageInfo->mImage.getColor(col, row).g;
+					blue += (int)imageInfo->mImage.getColor(col, row).b;
 				}
 			}
 			
@@ -49,7 +53,7 @@ void ImageProcesser::averageColor() {
 			blue /= size;
 		}
 		
-		mImageInfo->mAvgColor = ofColor(red, green, blue);
-		mImageInfo->mIsLoaded = true;
+		imageInfo->mAvgColor = ofColor(red, green, blue);
+		imageInfo->mIsLoaded = true;
 	}
 }

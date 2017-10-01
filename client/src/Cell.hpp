@@ -63,14 +63,14 @@ public:
 	ofFbo mCanvas;
 	
 	// for current use
-	std::shared_ptr<class ImageInfoBundle> mImageInfoBundle;
+	std::weak_ptr<class ImageInfoBundle> mImageInfoBundle;
 	
 	// double buffering for random image
-	std::shared_ptr<class BundleBuffer> mRandomBundleBuffer;
+	std::weak_ptr<class BundleBuffer> mRandomBundleBuffer;
 	bool mGoFlip;
 	
 	// double buffering for new image
-	std::shared_ptr<class BundleBuffer> mNewBundleBuffer;
+	std::weak_ptr<class BundleBuffer> mNewBundleBuffer;
 	bool mBackToRandom;
 
 	// false: random image, true: new image

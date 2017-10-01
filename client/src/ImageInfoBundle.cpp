@@ -120,7 +120,7 @@ void ImageInfoBundle::update(ofEventArgs & arg) {
 				imgInfo->mRenderPos.y = (imgInfo->mRenderSize.y - SCREEN_HEIGHT) * -0.5f;
 			}
 			
-			ofLogNotice("imgInfo") << imgInfo->mRenderPos << " -- " << imgInfo->mRenderSize;
+//			ofLogNotice("imgInfo") << imgInfo->mRenderPos << " -- " << imgInfo->mRenderSize;
 			
 			// process to get average color
 			imgInfo->mImageProcesser->process(imgInfo);

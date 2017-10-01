@@ -85,9 +85,11 @@ bool BundleBuffer::isFlippable() {
 bool BundleBuffer::isAllUserFlipped() {
 	bool ret = true;
 	for (auto& user : mUsers) {
-		if (user->mImageInfoBundle == getCurrent()) {
-			ret = false;
-			break;
+		if (auto infoBundle = user->mImageInfoBundle.lock()) {
+			if (infoBundle == getCurrent()) {
+				ret = false;
+				break;
+			}
 		}
 	}
 	

@@ -63,7 +63,10 @@ void Cell::boom() {
 	mIsNew = true;
 	mBackToRandom = false;
 	
-	mImageInfoBundle = mNewBundleBuffer->getNext();
+	if (auto bundleBuffer = mNewBundleBuffer.lock()) {
+		mImageInfoBundle = bundleBuffer->getNext();
+	}
+		
 	// ImageInfoBundle in mNewBundleBuffer has only 1 image
 	mIndexStart = 0;
 	mIndexCurrent = 0;
@@ -125,33 +128,39 @@ void Cell::update() {
 		case IMAGE:
 		{
 			ofSetColor(255);
-			glm::vec2 pos = mImageInfoBundle->mImageInfos[mIndexCurrent]->mRenderPos;
-			glm::vec2 size = mImageInfoBundle->mImageInfos[mIndexCurrent]->mRenderSize;
-			
-			int currentIndex;
-			
-			if (mUseCycle) {
-				currentIndex = mIndexCurrent;
-			} else {
-				currentIndex = mIndexStart;
+			if (auto infoBundle = mImageInfoBundle.lock()) {
+				glm::vec2 pos = infoBundle->mImageInfos[mIndexCurrent]->mRenderPos;
+				glm::vec2 size = infoBundle->mImageInfos[mIndexCurrent]->mRenderSize;
+				
+				int currentIndex;
+				
+				if (mUseCycle) {
+					currentIndex = mIndexCurrent;
+				} else {
+					currentIndex = mIndexStart;
+				}
+				
+				infoBundle->mImageInfos[currentIndex]->mImage.draw(pos, size.x, size.y);
 			}
-			
-			mImageInfoBundle->mImageInfos[currentIndex]->mImage.draw(pos, size.x, size.y);
 		}
 			break;
 		case COLOR:
 		{
-			ofSetColor(mImageInfoBundle->mImageInfos[mIndexCurrent]->mAvgColor);
-			ofDrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+			if (auto infoBundle = mImageInfoBundle.lock()) {
+				ofSetColor(infoBundle->mImageInfos[mIndexCurrent]->mAvgColor);
+				ofDrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+			}
 		}
 			break;
 		case TEXT:
 		{
-			ofSetColor(mImageInfoBundle->mImageInfos[mIndexCurrent]->mAvgColor);
-			ofDrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-			ofSetColor(255);
-			mFont->drawStringCentered(mWrappedText, SCREEN_WIDTH * 0.5f,
-									  SCREEN_HEIGHT * 0.5f);
+			if (auto infoBundle = mImageInfoBundle.lock()) {
+				ofSetColor(infoBundle->mImageInfos[mIndexCurrent]->mAvgColor);
+				ofDrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+				ofSetColor(255);
+				mFont->drawStringCentered(mWrappedText, SCREEN_WIDTH * 0.5f,
+										  SCREEN_HEIGHT * 0.5f);
+			}
 		}
 			break;
 		case BLACK:
@@ -183,22 +192,25 @@ void Cell::backToRandom() {
 	mBackToRandom = false;
 	mIsNew = false;
 	
-	mImageInfoBundle = mRandomBundleBuffer->getNext();
-	
-	int totalSize = mImageInfoBundle->mImageInfos.size();
-	if (totalSize > 0) {
-		mIndexStart = mId % mImageInfoBundle->mImageInfos.size();
-		mIndexCurrent = mIndexStart;
-				
-		mTimeImage = ofRandom(mRandomTimeImageRange.x, mRandomTimeImageRange.y);
-		mTimeColor = ofRandom(mRandomTimeColorRange.x, mRandomTimeColorRange.y);
-		mTimeText = ofRandom(mRandomTimeTextRange.x, mRandomTimeTextRange.y);
-		mTimeBlack = ofRandom(mRandomTimeBlackRange.x, mRandomTimeBlackRange.y);
-		
-		mTimeStart = ofGetElapsedTimef();
-		mState = IMAGE;
-		mOneCycleFinished = false;
-		mGoFlip = false;
+	if (auto bundleBuffer = mRandomBundleBuffer.lock()) {
+		mImageInfoBundle = bundleBuffer->getNext();
+	}
+	if (auto infoBundle = mImageInfoBundle.lock()) {
+		int totalSize = infoBundle->mImageInfos.size();
+		if (totalSize > 0) {
+			mIndexStart = mId % infoBundle->mImageInfos.size();
+			mIndexCurrent = mIndexStart;
+			
+			mTimeImage = ofRandom(mRandomTimeImageRange.x, mRandomTimeImageRange.y);
+			mTimeColor = ofRandom(mRandomTimeColorRange.x, mRandomTimeColorRange.y);
+			mTimeText = ofRandom(mRandomTimeTextRange.x, mRandomTimeTextRange.y);
+			mTimeBlack = ofRandom(mRandomTimeBlackRange.x, mRandomTimeBlackRange.y);
+			
+			mTimeStart = ofGetElapsedTimef();
+			mState = IMAGE;
+			mOneCycleFinished = false;
+			mGoFlip = false;
+		}
 	}
 }
 
@@ -206,31 +218,33 @@ void Cell::wrapText() {
 	// wrap text based on cell width
 	mWrappedText = "";
 	
-	std::vector<std::string> words = ofSplitString(mImageInfoBundle->mImageInfos[mIndexCurrent]->mText, " ", true, true);
-	
-	float maxWidth = SCREEN_WIDTH * 0.6f;
-	float width = 0;
-	
-	for (auto& word : words) {
-		std::string newWord;
-		if (mWrappedText.size() > 0) {
-			newWord = " " + word;
-		} else {
-			newWord = word;
+	if (auto infoBundle = mImageInfoBundle.lock()) {
+		std::vector<std::string> words = ofSplitString(infoBundle->mImageInfos[mIndexCurrent]->mText, " ", true, true);
+		
+		float maxWidth = SCREEN_WIDTH * 0.6f;
+		float width = 0;
+		
+		for (auto& word : words) {
+			std::string newWord;
+			if (mWrappedText.size() > 0) {
+				newWord = " " + word;
+			} else {
+				newWord = word;
+			}
+			
+			width += mFont->stringWidth(newWord);
+			
+			if (width > maxWidth) {
+				mWrappedText += "\n";
+				width = mFont->stringWidth(word);
+				mWrappedText += word;
+			} else {
+				mWrappedText += newWord;
+			}
 		}
 		
-		width += mFont->stringWidth(newWord);
-		
-		if (width > maxWidth) {
-			mWrappedText += "\n";
-			width = mFont->stringWidth(word);
-			mWrappedText += word;
-		} else {
-			mWrappedText += newWord;
-		}
+		mWrappedText += ".";
 	}
-	
-	mWrappedText += ".";
 	
 	try {
 		mWrappedText = ofToUpper(mWrappedText.substr(0, 1)) + mWrappedText.substr(1);
@@ -244,43 +258,51 @@ bool Cell::isNew() {
 }
 
 void Cell::cycle(float timeCurrent) {
-	int totalSize = mImageInfoBundle->mImageInfos.size();
-	if (totalSize > 0) {
-		int currentIndex;
-		if (mIndexCurrent < mIndexStart) {
-			currentIndex = mIndexCurrent + totalSize;
-		} else {
-			currentIndex = mIndexCurrent;
+	if (auto infoBundle = mImageInfoBundle.lock()) {
+		int totalSize = infoBundle->mImageInfos.size();
+		if (totalSize > 0) {
+			int currentIndex;
+			if (mIndexCurrent < mIndexStart) {
+				currentIndex = mIndexCurrent + totalSize;
+			} else {
+				currentIndex = mIndexCurrent;
+			}
+			if (!mOneCycleFinished && currentIndex - mIndexStart >= mCycleNum) {
+				// one cycle finished
+				mOneCycleFinished = true;
+			}
+			
+			int indexNext = (mIndexCurrent + 1) % totalSize;
+			// cycle not finished, switch to next image
+			mIndexCurrent = indexNext;
+			mState = IMAGE;
+			mTimeStart = timeCurrent;
 		}
-		if (!mOneCycleFinished && currentIndex - mIndexStart >= mCycleNum) {
-			// one cycle finished
-			mOneCycleFinished = true;
-		}
-		
-		int indexNext = (mIndexCurrent + 1) % totalSize;
-		// cycle not finished, switch to next image
-		mIndexCurrent = indexNext;
-		mState = IMAGE;
-		mTimeStart = timeCurrent;
 	}
 }
 
 void Cell::randomStateInBlack(float timeCurrent) {
 	if (timeCurrent - mTimeStart >= mTimeBlack) {
-		if (mGoFlip && mRandomBundleBuffer->isFlippable()) {
-			// flip to next buffer
-			mGoFlip = false;
-			mImageInfoBundle = mRandomBundleBuffer->getNext();
-			
-			int totalSize = mImageInfoBundle->mImageInfos.size();
-			if (totalSize > 0) {
-				mIndexStart = mId % mImageInfoBundle->mImageInfos.size();
-				mIndexCurrent = mIndexStart;
-				
-				mState = IMAGE;
-				mTimeStart = timeCurrent;
-				
-				mOneCycleFinished = false;
+		if (mGoFlip) {
+			if (auto bundleBuffer = mRandomBundleBuffer.lock()) {
+				if (bundleBuffer->isFlippable()) {
+					// flip to next buffer
+					mGoFlip = false;
+					mImageInfoBundle = bundleBuffer->getNext();
+					
+					if (auto infoBundle = mImageInfoBundle.lock()) {
+						int totalSize = infoBundle->mImageInfos.size();
+						if (totalSize > 0) {
+							mIndexStart = mId % infoBundle->mImageInfos.size();
+							mIndexCurrent = mIndexStart;
+							
+							mState = IMAGE;
+							mTimeStart = timeCurrent;
+							
+							mOneCycleFinished = false;
+						}
+					}
+				}
 			}
 		} else {
 			// cycle
